@@ -5,6 +5,23 @@ All notable changes to the Invader Tracker integration will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - 2026-10-26
+
+### Fixed
+
+- **Flashed + Unflashed + Gone dépassait le Total** — les identifiants d'awazleon sont normalisés (`PA_01` → `PA_1`), pas ceux de l'API Flash Invader. Un invader flashé renvoyé en `NA_01` ne correspondait donc pas au `NA_1` d'awazleon : il était compté comme flashé **et** comme « Unflashed (Available) » ou « Unflashed (Gone) ». Les deux sources sont maintenant comparées via `normalize_invader_id()` (majuscules + suppression du zero-padding), côté `CityStats`. Relevés avant correctif, au format *total → flashed + available + gone* : Nantes 3 → 2 + 1 + 2, Orléans 12 → 12 + 9 + 0, Versailles 42 → 27 + 6 + 17, Fontainebleau 46 → 8 + 27 + 14, Paris 1598 → 1310 + 99 + 195.
+- Le regroupement des invaders flashés par ville est désormais insensible à la casse de l'identifiant renvoyé par l'API.
+
+### Added
+
+- **Attribut `invaders` sur `Unflashed (Available)` et `Unflashed (Gone)`** (devices ville) — la liste triée des IDs restant à flasher / définitivement perdus, pour les afficher dans une carte ou une automatisation.
+
+## [2.7.0] - 2026-06-06
+
+### Added
+
+- **UID modifiable depuis le menu Options** de l'intégration, sans avoir à la supprimer puis la recréer.
+
 ## [2.6.0] - 2026-05-26
 
 ### Added

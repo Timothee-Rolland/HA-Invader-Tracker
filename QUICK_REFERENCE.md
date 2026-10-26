@@ -72,6 +72,22 @@ sensor.rank:
 sensor.city_{city}_total_invaders:
   state: 350                      # Total count
   flashable_count: 280            # Of which flashable (not destroyed/gone)
+
+sensor.city_{city}_unflashed_available:
+  state: 9                        # How many are left to flash
+  invaders: ["OR_1", "OR_2", …]   # Which ones
+
+sensor.city_{city}_unflashed_gone:
+  state: 2                        # How many were destroyed before you flashed them
+  invaders: ["OR_11", "OR_12"]    # Which ones
+```
+
+List them in a Markdown card:
+
+```yaml
+type: markdown
+content: >
+  {{ state_attr('sensor.city_paris_unflashed_available', 'invaders') | join(', ') }}
 ```
 
 ## Common Automations

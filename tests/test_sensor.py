@@ -176,9 +176,15 @@ class TestInvaderUnflashedSensor:
         assert sensor.native_value == 1
 
     def test_attributes(self, mock_coordinator, mock_processor, mock_entry) -> None:
-        """Test no extra attributes on unflashed sensor."""
+        """Test the unflashed sensor lists the IDs left to flash."""
         sensor = InvaderUnflashedSensor(mock_coordinator, mock_processor, mock_entry, "PA", "Paris")
-        assert sensor.extra_state_attributes is None or sensor.extra_state_attributes == {}
+        assert sensor.extra_state_attributes == {"invaders": ["PA_002"]}
+
+    def test_attributes_unavailable(self, mock_coordinator, mock_processor, mock_entry) -> None:
+        """Test no attributes when the sensor is unavailable."""
+        mock_coordinator.last_update_success = False
+        sensor = InvaderUnflashedSensor(mock_coordinator, mock_processor, mock_entry, "PA", "Paris")
+        assert sensor.extra_state_attributes == {}
 
 
 class TestInvaderUnflashedGoneSensor:
@@ -191,9 +197,15 @@ class TestInvaderUnflashedGoneSensor:
         assert sensor.native_value == 1
 
     def test_attributes(self, mock_coordinator, mock_processor, mock_entry) -> None:
-        """Test no extra attributes on unflashed gone sensor."""
+        """Test the unflashed gone sensor lists the IDs that can no longer be flashed."""
         sensor = InvaderUnflashedGoneSensor(mock_coordinator, mock_processor, mock_entry, "PA", "Paris")
-        assert sensor.extra_state_attributes is None or sensor.extra_state_attributes == {}
+        assert sensor.extra_state_attributes == {"invaders": ["PA_003"]}
+
+    def test_attributes_unavailable(self, mock_coordinator, mock_processor, mock_entry) -> None:
+        """Test no attributes when the sensor is unavailable."""
+        mock_coordinator.last_update_success = False
+        sensor = InvaderUnflashedGoneSensor(mock_coordinator, mock_processor, mock_entry, "PA", "Paris")
+        assert sensor.extra_state_attributes == {}
 
 
 class TestInvaderNewSensor:

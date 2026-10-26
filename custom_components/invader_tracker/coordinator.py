@@ -337,9 +337,10 @@ class FlashInvaderCoordinator(DataUpdateCoordinator[list[FlashedInvader]]):
         self._flashed_by_city.clear()
 
         for inv in invaders:
-            # Extract city code from ID (e.g., "PA_346" -> "PA")
+            # Extract city code from ID (e.g., "PA_346" -> "PA"), upper-cased so the
+            # grouping matches the awazleon city codes whatever casing the API returns
             parts = inv.id.rsplit("_", 1)
-            city_code = parts[0] if len(parts) == 2 else inv.id[:2]  # Fallback to first 2 chars
+            city_code = (parts[0] if len(parts) == 2 else inv.id[:2]).upper()
 
             self._flashed_by_city.setdefault(city_code, []).append(inv)
 

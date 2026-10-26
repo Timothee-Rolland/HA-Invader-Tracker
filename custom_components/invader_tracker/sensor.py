@@ -251,6 +251,14 @@ class InvaderUnflashedSensor(InvaderBaseSensor):
         stats = self._processor.compute_city_stats(self._city_code)
         return stats.unflashed_count
 
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return the IDs of the invaders left to flash."""
+        if not self.available:
+            return {}
+        stats = self._processor.compute_city_stats(self._city_code)
+        return {"invaders": sorted(inv.id for inv in stats.unflashed)}
+
 
 class InvaderUnflashedGoneSensor(InvaderBaseSensor):
     """Sensor for unflashed and no longer available invaders."""
@@ -277,6 +285,14 @@ class InvaderUnflashedGoneSensor(InvaderBaseSensor):
             return None
         stats = self._processor.compute_city_stats(self._city_code)
         return stats.unflashed_gone_count
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return the IDs of the invaders that can no longer be flashed."""
+        if not self.available:
+            return {}
+        stats = self._processor.compute_city_stats(self._city_code)
+        return {"invaders": sorted(inv.id for inv in stats.unflashed_gone)}
 
 
 class InvaderNewSensor(InvaderBaseSensor):

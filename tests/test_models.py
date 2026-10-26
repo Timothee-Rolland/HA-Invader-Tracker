@@ -5,10 +5,35 @@ from datetime import datetime
 from custom_components.invader_tracker.models import (
     City,
     CityStats,
+    FlashedInvader,
     Invader,
     InvaderStatus,
     StateSnapshot,
+    normalize_invader_id,
 )
+
+
+class TestNormalizeInvaderId:
+    """Tests for normalize_invader_id."""
+
+    def test_strips_zero_padding(self):
+        """Awazleon pads the number, Flash Invader does not."""
+        assert normalize_invader_id("PA_01") == "PA_1"
+        assert normalize_invader_id("PA_0346") == "PA_346"
+
+    def test_upper_cases_and_trims(self):
+        """Casing and stray whitespace must not break the matching."""
+        assert normalize_invader_id("na_01") == "NA_1"
+        assert normalize_invader_id("  pa_1  ") == "PA_1"
+
+    def test_already_normalized_is_unchanged(self):
+        """An already normalized ID stays as is."""
+        assert normalize_invader_id("PA_1554") == "PA_1554"
+
+    def test_non_numeric_suffix_is_kept(self):
+        """IDs that do not end with a number are only upper-cased."""
+        assert normalize_invader_id("pa_bis") == "PA_BIS"
+        assert normalize_invader_id("paris") == "PARIS"
 
 
 class TestInvader:
@@ -76,6 +101,50 @@ class TestCityStats:
         # PA_004 is unflashed and DESTROYED (not flashable)
         assert stats.unflashed_count == 1  # Only PA_003
         assert stats.unflashed_gone_count == 1  # Only PA_004
+
+    def test_padded_flashed_ids_still_count_as_flashed(self):
+        """Nantes: Flash Invader returns "NA_01", awazleon "NA_1" — same invader.
+
+        Before normalization both sources were compared raw, so a flashed
+        invader was counted a second time as unflashed (available or gone)
+        and flashed + unflashed + gone overshot the total.
+        """
+        city = City(code="NA", name="Nantes")
+        all_invaders = [
+            Invader(id="NA_1", city_code="NA", city_name="Nantes", points=50, status=InvaderStatus.OK),
+            Invader(id="NA_2", city_code="NA", city_name="Nantes", points=50, status=InvaderStatus.DESTROYED),
+            Invader(id="NA_3", city_code="NA", city_name="Nantes", points=50, status=InvaderStatus.DESTROYED),
+        ]
+        flashed = [
+            FlashedInvader(id="NA_01", name="NA_01", city_id=42, points=50, image_url=""),
+            FlashedInvader(id="na_02", name="na_02", city_id=42, points=50, image_url=""),
+        ]
+        stats = CityStats(city=city, all_invaders=all_invaders, flashed_invaders=flashed)
+
+        assert stats.flashed_count == 2
+        assert stats.unflashed_count == 0
+        assert [inv.id for inv in stats.unflashed_gone] == ["NA_3"]
+        assert stats.flashed_count + stats.unflashed_count + stats.unflashed_gone_count == stats.total_count
+
+    def test_padded_flashed_ids_in_news_lists(self):
+        """New/reactivated invaders flashed under a padded ID are not offered again."""
+        city = City(code="NA", name="Nantes")
+        new = Invader(id="NA_4", city_code="NA", city_name="Nantes", points=50, status=InvaderStatus.OK)
+        reactivated = Invader(id="NA_5", city_code="NA", city_name="Nantes", points=50, status=InvaderStatus.OK)
+        stats = CityStats(
+            city=city,
+            all_invaders=[new, reactivated],
+            flashed_invaders=[
+                FlashedInvader(id="NA_04", name="NA_04", city_id=42, points=50, image_url=""),
+                FlashedInvader(id="na_05", name="na_05", city_id=42, points=50, image_url=""),
+            ],
+            new_invaders=[new],
+            reactivated_invaders=[reactivated],
+        )
+
+        assert stats.unflashed_new == []
+        assert stats.unflashed_reactivated == []
+        assert stats.unflashed_new_count == 0
 
     def test_total_count(self, mock_invaders_paris):
         """Test total count."""

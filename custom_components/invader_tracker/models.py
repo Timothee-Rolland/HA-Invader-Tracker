@@ -7,6 +7,20 @@ from datetime import date, datetime, timedelta
 from enum import Enum
 
 
+def normalize_invader_id(inv_id: str) -> str:
+    """Normalize an invader ID so IDs from different sources compare equal.
+
+    Awazleon pads the numeric part ("PA_01") while Flash Invader does not
+    ("PA_1"), and casing is not guaranteed either. Upper-case the reference
+    and strip the padding so both sources land on the same key.
+    """
+    ref = inv_id.strip().upper()
+    prefix, _, number = ref.rpartition("_")
+    if prefix and number.isdigit():
+        return f"{prefix}_{int(number)}"
+    return ref
+
+
 class InvaderStatus(Enum):
     """Status from invader-spotter community data."""
 
@@ -115,18 +129,22 @@ class CityStats:
 
     @property
     def flashed_ids(self) -> set[str]:
-        """Get set of flashed invader IDs."""
-        return {inv.id for inv in self.flashed_invaders}
+        """Get set of flashed invader IDs, normalized for cross-source matching."""
+        return {normalize_invader_id(inv.id) for inv in self.flashed_invaders}
 
     @property
     def unflashed(self) -> list[Invader]:
         """Invaders not flashed AND still flashable."""
-        return [inv for inv in self.all_invaders if inv.id not in self.flashed_ids and inv.is_flashable]
+        flashed = self.flashed_ids
+        return [inv for inv in self.all_invaders if normalize_invader_id(inv.id) not in flashed and inv.is_flashable]
 
     @property
     def unflashed_gone(self) -> list[Invader]:
         """Invaders not flashed AND no longer flashable (missed)."""
-        return [inv for inv in self.all_invaders if inv.id not in self.flashed_ids and not inv.is_flashable]
+        flashed = self.flashed_ids
+        return [
+            inv for inv in self.all_invaders if normalize_invader_id(inv.id) not in flashed and not inv.is_flashable
+        ]
 
     @property
     def total_count(self) -> int:
@@ -156,12 +174,14 @@ class CityStats:
     @property
     def unflashed_new(self) -> list[Invader]:
         """New invaders that have not been flashed yet."""
-        return [inv for inv in self.new_invaders if inv.id not in self.flashed_ids]
+        flashed = self.flashed_ids
+        return [inv for inv in self.new_invaders if normalize_invader_id(inv.id) not in flashed]
 
     @property
     def unflashed_reactivated(self) -> list[Invader]:
         """Reactivated invaders that have not been flashed yet."""
-        return [inv for inv in self.reactivated_invaders if inv.id not in self.flashed_ids]
+        flashed = self.flashed_ids
+        return [inv for inv in self.reactivated_invaders if normalize_invader_id(inv.id) not in flashed]
 
     @property
     def unflashed_new_count(self) -> int:

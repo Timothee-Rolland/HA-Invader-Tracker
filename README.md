@@ -119,8 +119,8 @@ For each tracked city, a dedicated device is created with:
 |--------|------|-------------|------------|
 | `sensor.total_invaders` | Sensor | Total invaders in the city | `flashable_count` |
 | `sensor.flashed` | Sensor | Invaders you've flashed | — |
-| `sensor.unflashed_available` | Sensor | Flashable invaders not yet done | — |
-| `sensor.unflashed_gone` | Sensor | Destroyed invaders you missed | — |
+| `sensor.unflashed_available` | Sensor | Flashable invaders not yet done | `invaders` (list of IDs) |
+| `sensor.unflashed_gone` | Sensor | Destroyed invaders you missed | `invaders` (list of IDs) |
 | `sensor.new_reactivated` | Sensor | New + reactivated unflashed invaders | `new_count`, `reactivated_count` |
 | `sensor.invaders_to_flash` | Sensor | CSV list of IDs to flash | — |
 | `binary_sensor.has_new` | Binary Sensor | ON when new/reactivated invaders exist | — |
