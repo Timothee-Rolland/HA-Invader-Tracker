@@ -64,9 +64,14 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 
 4. **Install development dependencies:**
    ```bash
-   pip install -e .
-   pip install pytest pytest-asyncio ruff mypy
+   pip install homeassistant beautifulsoup4 aiohttp voluptuous
+   pip install pytest pytest-asyncio pytest-cov
+   pip install ruff==0.17.2 mypy==2.4.0
    ```
+
+   > Ruff and MyPy are pinned to the versions CI uses (see `.github/workflows/ci.yml`).
+   > Their rule sets change between releases, so an unpinned install can report
+   > findings CI does not — or miss findings CI reports.
 
 5. **Create a branch for your changes:**
    ```bash
@@ -93,12 +98,17 @@ pytest -v
 
 We use **Ruff** for linting and code formatting. Before committing:
 
+Lint rules, formatting and the target Python version live in `pyproject.toml`.
+
 ```bash
 # Check code style
 ruff check custom_components/invader_tracker tests/
 
 # Fix issues automatically
 ruff check --fix custom_components/invader_tracker tests/
+
+# Format (CI runs `ruff format --check`, so run this before committing)
+ruff format custom_components/invader_tracker tests/
 ```
 
 ### Type Checking
@@ -260,7 +270,8 @@ class TestInvader:
 3. **Ensure tests pass:**
    ```bash
    pytest
-   ruff check --fix .
+   ruff check custom_components/invader_tracker tests/
+   ruff format --check custom_components/invader_tracker tests/
    mypy custom_components/invader_tracker/
    ```
 
