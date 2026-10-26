@@ -1,4 +1,5 @@
 """Constants for Invader Tracker integration."""
+
 from typing import Final
 
 DOMAIN: Final = "invader_tracker"

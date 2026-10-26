@@ -1,4 +1,5 @@
 """Binary sensor entities for Invader Tracker integration."""
+
 from __future__ import annotations
 
 import logging
@@ -38,11 +39,7 @@ async def async_setup_entry(
     entities: list[BinarySensorEntity] = []
 
     for city_code, city_name in cities.items():
-        entities.append(
-            InvaderHasNewBinarySensor(
-                spotter_coordinator, processor, entry, city_code, city_name
-            )
-        )
+        entities.append(InvaderHasNewBinarySensor(spotter_coordinator, processor, entry, city_code, city_name))
 
     async_add_entities(entities)
 
@@ -111,4 +108,3 @@ class InvaderHasNewBinarySensor(CoordinatorEntity, BinarySensorEntity):
             return None
         stats = self._processor.compute_city_stats(self._city_code)
         return stats.unflashed_new_count > 0
-

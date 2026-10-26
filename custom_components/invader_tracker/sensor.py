@@ -1,4 +1,5 @@
 """Sensor entities for Invader Tracker integration."""
+
 from __future__ import annotations
 
 import logging
@@ -58,24 +59,12 @@ async def async_setup_entry(
         # Create sensors for each city
         entities.extend(
             [
-                InvaderTotalSensor(
-                    spotter_coordinator, flash_coordinator, processor, entry, city_code, city_name
-                ),
-                InvaderFlashedSensor(
-                    flash_coordinator, processor, entry, city_code, city_name
-                ),
-                InvaderUnflashedSensor(
-                    spotter_coordinator, processor, entry, city_code, city_name
-                ),
-                InvaderUnflashedGoneSensor(
-                    spotter_coordinator, processor, entry, city_code, city_name
-                ),
-                InvaderNewSensor(
-                    spotter_coordinator, processor, entry, city_code, city_name
-                ),
-                InvaderToFlashSensor(
-                    spotter_coordinator, processor, entry, city_code, city_name
-                ),
+                InvaderTotalSensor(spotter_coordinator, flash_coordinator, processor, entry, city_code, city_name),
+                InvaderFlashedSensor(flash_coordinator, processor, entry, city_code, city_name),
+                InvaderUnflashedSensor(spotter_coordinator, processor, entry, city_code, city_name),
+                InvaderUnflashedGoneSensor(spotter_coordinator, processor, entry, city_code, city_name),
+                InvaderNewSensor(spotter_coordinator, processor, entry, city_code, city_name),
+                InvaderToFlashSensor(spotter_coordinator, processor, entry, city_code, city_name),
             ]
         )
 
@@ -153,9 +142,7 @@ class InvaderTotalSensor(InvaderBaseSensor):
         city_name: str,
     ) -> None:
         """Initialize the sensor."""
-        super().__init__(
-            coordinator, processor, entry, city_code, city_name, SENSOR_TOTAL
-        )
+        super().__init__(coordinator, processor, entry, city_code, city_name, SENSOR_TOTAL)
         self._flash_coordinator = flash_coordinator
         self._attr_name = "Total Invaders"
 
@@ -190,7 +177,7 @@ class InvaderTotalSensor(InvaderBaseSensor):
         }
 
 
-class InvaderFlashedSensor(CoordinatorEntity, SensorEntity):
+class InvaderFlashedSensor(CoordinatorEntity["FlashInvaderCoordinator"], SensorEntity):
     """Sensor for flashed invaders in a city — depends only on Flash Invader API."""
 
     _attr_has_entity_name = True
@@ -253,9 +240,7 @@ class InvaderUnflashedSensor(InvaderBaseSensor):
         city_name: str,
     ) -> None:
         """Initialize the sensor."""
-        super().__init__(
-            coordinator, processor, entry, city_code, city_name, SENSOR_UNFLASHED
-        )
+        super().__init__(coordinator, processor, entry, city_code, city_name, SENSOR_UNFLASHED)
         self._attr_name = "Unflashed (Available)"
 
     @property
@@ -282,9 +267,7 @@ class InvaderUnflashedGoneSensor(InvaderBaseSensor):
         city_name: str,
     ) -> None:
         """Initialize the sensor."""
-        super().__init__(
-            coordinator, processor, entry, city_code, city_name, SENSOR_UNFLASHED_GONE
-        )
+        super().__init__(coordinator, processor, entry, city_code, city_name, SENSOR_UNFLASHED_GONE)
         self._attr_name = "Unflashed (Gone)"
 
     @property
@@ -311,9 +294,7 @@ class InvaderNewSensor(InvaderBaseSensor):
         city_name: str,
     ) -> None:
         """Initialize the sensor."""
-        super().__init__(
-            coordinator, processor, entry, city_code, city_name, SENSOR_NEW
-        )
+        super().__init__(coordinator, processor, entry, city_code, city_name, SENSOR_NEW)
         self._attr_name = "New & Reactivated"
 
     @property
@@ -385,7 +366,5 @@ class InvaderToFlashSensor(CoordinatorEntity, SensorEntity):
         if not self.available:
             return None
         stats = self._processor.compute_city_stats(self._city_code)
-        to_flash_ids = [inv.id for inv in stats.unflashed_new] + \
-                       [inv.id for inv in stats.unflashed_reactivated]
+        to_flash_ids = [inv.id for inv in stats.unflashed_new] + [inv.id for inv in stats.unflashed_reactivated]
         return ", ".join(to_flash_ids) if to_flash_ids else None
-

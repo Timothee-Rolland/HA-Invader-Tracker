@@ -1,4 +1,5 @@
 """Tests for the Awazleon REST API client."""
+
 from __future__ import annotations
 
 from datetime import date
@@ -6,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from custom_components.invader_tracker.api.awazleon import AwazleonClient, STATE_MAPPING
+from custom_components.invader_tracker.api.awazleon import STATE_MAPPING, AwazleonClient
 from custom_components.invader_tracker.exceptions import InvaderSpotterConnectionError
 from custom_components.invader_tracker.models import InvaderStatus
 

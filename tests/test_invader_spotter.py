@@ -1,7 +1,8 @@
 """Tests for Invader Spotter scraper."""
+
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from unittest.mock import AsyncMock, MagicMock
 
 import aiohttp
@@ -32,6 +33,40 @@ def _make_response(status: int = 200, text: str = "") -> AsyncMock:
     response.status = status
     response.text = AsyncMock(return_value=text)
     return response
+
+
+FRENCH_MONTHS = {
+    1: "janvier",
+    2: "février",
+    3: "mars",
+    4: "avril",
+    5: "mai",
+    6: "juin",
+    7: "juillet",
+    8: "août",
+    9: "septembre",
+    10: "octobre",
+    11: "novembre",
+    12: "décembre",
+}
+
+
+def _news_html(entries: list[tuple[date, str]]) -> str:
+    """Build a news.php-like page: month headers followed by "DD : text" lines.
+
+    Entries must be ordered from most recent to oldest, like the real page.
+    Dates are passed in by the caller so tests stay independent of today's date.
+    """
+    lines: list[str] = []
+    current_month: tuple[int, int] | None = None
+    for event_date, text in entries:
+        month = (event_date.year, event_date.month)
+        if month != current_month:
+            lines.append(f"{FRENCH_MONTHS[event_date.month]} {event_date.year}")
+            current_month = month
+        lines.append(f"{event_date.day} : {text}")
+    body = "\n        ".join(lines)
+    return f"<html><body>\n        {body}\n        </body></html>"
 
 
 class TestParseCitiesPage:
@@ -127,18 +162,15 @@ class TestParseInvaderEntry:
 
     def test_extract_status_from_html_images(self, scraper: InvaderSpotterScraper) -> None:
         """Test extracting status from HTML image classes."""
-        assert scraper._extract_status_from_html(
-            '<img src="spot_invader_ok.png">', ""
-        ) == InvaderStatus.OK
-        assert scraper._extract_status_from_html(
-            '<img src="spot_invader_destroyed.png">', ""
-        ) == InvaderStatus.DESTROYED
-        assert scraper._extract_status_from_html(
-            '<img src="spot_invader_degraded.png">', ""
-        ) == InvaderStatus.DAMAGED
-        assert scraper._extract_status_from_html(
-            '<img src="spot_invader_degraded.png">', "très dégradé"
-        ) == InvaderStatus.VERY_DAMAGED
+        assert scraper._extract_status_from_html('<img src="spot_invader_ok.png">', "") == InvaderStatus.OK
+        assert (
+            scraper._extract_status_from_html('<img src="spot_invader_destroyed.png">', "") == InvaderStatus.DESTROYED
+        )
+        assert scraper._extract_status_from_html('<img src="spot_invader_degraded.png">', "") == InvaderStatus.DAMAGED
+        assert (
+            scraper._extract_status_from_html('<img src="spot_invader_degraded.png">', "très dégradé")
+            == InvaderStatus.VERY_DAMAGED
+        )
 
 
 class TestParseCityPage:
@@ -240,15 +272,14 @@ class TestParseNews:
 
     def test_parse_news_full(self, scraper: InvaderSpotterScraper) -> None:
         """Test parsing full news HTML content."""
-        html = """
-        <html><body>
-        avril 2026
-        10 : Ajout de PA_1554
-        5 : Destruction de LYN_042
-        mars 2026
-        25 : Réactivation de PA_008
-        </body></html>
-        """
+        today = date.today()
+        html = _news_html(
+            [
+                (today, "Ajout de PA_1554"),
+                (today - timedelta(days=10), "Destruction de LYN_042"),
+                (today - timedelta(days=40), "Réactivation de PA_008"),
+            ]
+        )
         events = scraper._parse_news(html, days=60, city_codes=None)
 
         assert len(events) == 3
@@ -260,16 +291,15 @@ class TestParseNews:
 
     def test_parse_news_respects_cutoff(self, scraper: InvaderSpotterScraper) -> None:
         """Test that news parsing respects day cutoff."""
-        html = """
-        <html><body>
-        janvier 2026
-        15 : Ajout de PA_1554
-        janvier 2020
-        10 : Destruction de PA_OLD
-        </body></html>
-        """
+        today = date.today()
+        html = _news_html(
+            [
+                (today - timedelta(days=5), "Ajout de PA_1554"),
+                (today - timedelta(days=90), "Destruction de PA_834"),
+            ]
+        )
         events = scraper._parse_news(html, days=30, city_codes=None)
 
-        # Only the 2026 event should be within range (assuming test runs in 2026)
+        # Only the event inside the 30-day window is kept
         ids = {e.invader_id for e in events}
-        assert "PA_OLD" not in ids
+        assert ids == {"PA_1554"}

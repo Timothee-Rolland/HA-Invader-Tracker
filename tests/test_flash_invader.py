@@ -1,4 +1,5 @@
 """Tests for Flash Invader API client."""
+
 from __future__ import annotations
 
 from datetime import date, datetime
@@ -203,9 +204,7 @@ class TestGetFlashedInvaders:
         assert invaders[0].flash_date is None
 
     @pytest.mark.asyncio
-    async def test_invalid_date_format_parsed_as_none(
-        self, api: FlashInvaderAPI, mock_session
-    ) -> None:
+    async def test_invalid_date_format_parsed_as_none(self, api: FlashInvaderAPI, mock_session) -> None:
         """Test that invalid date formats result in None."""
         json_data = {
             "invaders": {

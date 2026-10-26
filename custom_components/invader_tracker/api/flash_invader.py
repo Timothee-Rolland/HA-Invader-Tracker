@@ -1,7 +1,7 @@
 """Flash Invader API client."""
+
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import re
@@ -91,19 +91,15 @@ class FlashInvaderAPI:
             ) as response:
                 return await self._handle_response(response)
 
-        except asyncio.TimeoutError as err:
+        except TimeoutError as err:
             _LOGGER.warning("Flash Invader API timeout")
             raise FlashInvaderConnectionError("Request timed out") from err
 
         except aiohttp.ClientError as err:
-            _LOGGER.warning(
-                "Flash Invader API connection error: %s", type(err).__name__
-            )
+            _LOGGER.warning("Flash Invader API connection error: %s", type(err).__name__)
             raise FlashInvaderConnectionError(f"Connection failed: {err}") from err
 
-    async def _handle_response(
-        self, response: aiohttp.ClientResponse
-    ) -> list[FlashedInvader]:
+    async def _handle_response(self, response: aiohttp.ClientResponse) -> list[FlashedInvader]:
         """Handle API response with status-specific error handling."""
         if response.status == 200:
             return await self._parse_response(response)
@@ -134,9 +130,7 @@ class FlashInvaderAPI:
         _LOGGER.error("Flash Invader API: Unexpected status %d. Response: %s", response.status, body[:200])
         raise InvalidResponseError(f"Unexpected status: {response.status}")
 
-    async def _parse_response(
-        self, response: aiohttp.ClientResponse
-    ) -> list[FlashedInvader]:
+    async def _parse_response(self, response: aiohttp.ClientResponse) -> list[FlashedInvader]:
         """Parse JSON response."""
         try:
             data = await response.json()
@@ -153,9 +147,7 @@ class FlashInvaderAPI:
 
         # Parse per-city si_count from the cities list
         self._si_count_by_city_id = {
-            int(c["id"]): int(c.get("si_count", 0))
-            for c in data.get("cities", [])
-            if isinstance(c, dict) and "id" in c
+            int(c["id"]): int(c.get("si_count", 0)) for c in data.get("cities", []) if isinstance(c, dict) and "id" in c
         }
 
         invaders: list[FlashedInvader] = []
@@ -216,7 +208,7 @@ class FlashInvaderAPI:
                     registration_date=data.get("registration_date", ""),
                 )
 
-        except asyncio.TimeoutError as err:
+        except TimeoutError as err:
             raise FlashInvaderConnectionError("Request timed out") from err
         except aiohttp.ClientError as err:
             raise FlashInvaderConnectionError(f"Connection failed: {err}") from err
@@ -249,7 +241,7 @@ class FlashInvaderAPI:
 
                 html_content = await response.text()
 
-        except asyncio.TimeoutError as err:
+        except TimeoutError as err:
             raise FlashInvaderConnectionError("Request timed out") from err
         except aiohttp.ClientError as err:
             raise FlashInvaderConnectionError(f"Connection failed: {err}") from err

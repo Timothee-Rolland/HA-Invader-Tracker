@@ -1,4 +1,5 @@
 """State storage for Invader Tracker integration."""
+
 from __future__ import annotations
 
 import logging
@@ -27,9 +28,7 @@ class StateStore:
             entry_id: Config entry ID for unique storage key
 
         """
-        self._store: Store[dict[str, Any]] = Store(
-            hass, STORAGE_VERSION, f"{STORAGE_KEY}_{entry_id}"
-        )
+        self._store: Store[dict[str, Any]] = Store(hass, STORAGE_VERSION, f"{STORAGE_KEY}_{entry_id}")
 
     async def async_save_snapshot(self, snapshot: StateSnapshot) -> None:
         """Save snapshot to storage.
@@ -40,25 +39,11 @@ class StateStore:
         """
         data = {
             "timestamp": snapshot.timestamp.isoformat(),
-            "invader_ids_by_city": {
-                city: list(ids) for city, ids in snapshot.invader_ids_by_city.items()
-            },
-            "status_by_invader": {
-                inv_id: status.value
-                for inv_id, status in snapshot.status_by_invader.items()
-            },
-            "first_seen_date": {
-                inv_id: dt.isoformat()
-                for inv_id, dt in snapshot.first_seen_date.items()
-            },
-            "previous_status": {
-                inv_id: status.value
-                for inv_id, status in snapshot.previous_status.items()
-            },
-            "city_first_seen": {
-                city: dt.isoformat()
-                for city, dt in snapshot.city_first_seen.items()
-            },
+            "invader_ids_by_city": {city: list(ids) for city, ids in snapshot.invader_ids_by_city.items()},
+            "status_by_invader": {inv_id: status.value for inv_id, status in snapshot.status_by_invader.items()},
+            "first_seen_date": {inv_id: dt.isoformat() for inv_id, dt in snapshot.first_seen_date.items()},
+            "previous_status": {inv_id: status.value for inv_id, status in snapshot.previous_status.items()},
+            "city_first_seen": {city: dt.isoformat() for city, dt in snapshot.city_first_seen.items()},
         }
 
         await self._store.async_save(data)
@@ -83,24 +68,18 @@ class StateStore:
         try:
             snapshot = StateSnapshot(
                 timestamp=datetime.fromisoformat(data["timestamp"]),
-                invader_ids_by_city={
-                    city: set(ids) for city, ids in data["invader_ids_by_city"].items()
-                },
+                invader_ids_by_city={city: set(ids) for city, ids in data["invader_ids_by_city"].items()},
                 status_by_invader={
-                    inv_id: InvaderStatus(status)
-                    for inv_id, status in data["status_by_invader"].items()
+                    inv_id: InvaderStatus(status) for inv_id, status in data["status_by_invader"].items()
                 },
                 first_seen_date={
-                    inv_id: datetime.fromisoformat(dt)
-                    for inv_id, dt in data.get("first_seen_date", {}).items()
+                    inv_id: datetime.fromisoformat(dt) for inv_id, dt in data.get("first_seen_date", {}).items()
                 },
                 previous_status={
-                    inv_id: InvaderStatus(status)
-                    for inv_id, status in data.get("previous_status", {}).items()
+                    inv_id: InvaderStatus(status) for inv_id, status in data.get("previous_status", {}).items()
                 },
                 city_first_seen={
-                    city: datetime.fromisoformat(dt)
-                    for city, dt in data.get("city_first_seen", {}).items()
+                    city: datetime.fromisoformat(dt) for city, dt in data.get("city_first_seen", {}).items()
                 },
             )
             _LOGGER.debug(

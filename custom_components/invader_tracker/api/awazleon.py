@@ -1,7 +1,7 @@
 """Awazleon.space REST API client for invader data."""
+
 from __future__ import annotations
 
-import asyncio
 import logging
 from datetime import date, datetime
 
@@ -15,11 +15,11 @@ _LOGGER = logging.getLogger(__name__)
 
 # Mapping from awazleon state codes to InvaderStatus
 STATE_MAPPING: dict[str, InvaderStatus] = {
-    "A": InvaderStatus.OK,          # Alive
-    "DG": InvaderStatus.DAMAGED,    # Damaged (dégradé / très dégradé combined)
-    "D": InvaderStatus.DESTROYED,   # Dead
+    "A": InvaderStatus.OK,  # Alive
+    "DG": InvaderStatus.DAMAGED,  # Damaged (dégradé / très dégradé combined)
+    "D": InvaderStatus.DESTROYED,  # Dead
     "DD": InvaderStatus.DESTROYED,  # Dead definitive
-    "H": InvaderStatus.NOT_VISIBLE, # Hidden
+    "H": InvaderStatus.NOT_VISIBLE,  # Hidden
 }
 
 
@@ -52,15 +52,13 @@ class AwazleonClient:
                 timeout=aiohttp.ClientTimeout(total=30),
             ) as response:
                 if response.status != 200:
-                    raise InvaderSpotterConnectionError(
-                        f"HTTP {response.status} fetching cities from awazleon"
-                    )
+                    raise InvaderSpotterConnectionError(f"HTTP {response.status} fetching cities from awazleon")
                 try:
                     data = await response.json()
                 except (ValueError, aiohttp.ContentTypeError) as err:
                     raise ParseError("Invalid JSON from awazleon /cities/info") from err
 
-        except asyncio.TimeoutError as err:
+        except TimeoutError as err:
             raise InvaderSpotterConnectionError("Timeout fetching cities from awazleon") from err
         except aiohttp.ClientError as err:
             raise InvaderSpotterConnectionError(f"Connection error: {err}") from err
@@ -78,11 +76,13 @@ class AwazleonClient:
         for prefix, info in cities_data.items():
             if not isinstance(info, dict):
                 continue
-            cities.append(City(
-                code=prefix.upper(),
-                name=str(info.get("name", prefix)),
-                country=str(info.get("country", "")),
-            ))
+            cities.append(
+                City(
+                    code=prefix.upper(),
+                    name=str(info.get("name", prefix)),
+                    country=str(info.get("country", "")),
+                )
+            )
 
         _LOGGER.debug("Fetched %d cities from awazleon", len(cities))
         return cities
@@ -123,10 +123,8 @@ class AwazleonClient:
                 except (ValueError, aiohttp.ContentTypeError) as err:
                     raise ParseError(f"Invalid JSON from awazleon for city {city_code}") from err
 
-        except asyncio.TimeoutError as err:
-            raise InvaderSpotterConnectionError(
-                f"Timeout fetching city {city_code} from awazleon"
-            ) from err
+        except TimeoutError as err:
+            raise InvaderSpotterConnectionError(f"Timeout fetching city {city_code} from awazleon") from err
         except aiohttp.ClientError as err:
             raise InvaderSpotterConnectionError(f"Connection error: {err}") from err
 

@@ -1,16 +1,17 @@
 """Config flow for Invader Tracker integration."""
+
 from __future__ import annotations
 
 import logging
 import re
 from typing import Any
 
+import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-from homeassistant.helpers.selector import SelectOptionDict, SelectSelector, SelectSelectorConfig, SelectSelectorMode
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers.selector import SelectOptionDict, SelectSelector, SelectSelectorConfig, SelectSelectorMode
 
 from .api.awazleon import AwazleonClient
 from .api.flash_invader import FlashInvaderAPI
@@ -22,14 +23,14 @@ from .const import (
     CONF_NEWS_DAYS,
     CONF_SCRAPE_INTERVAL,
     CONF_TRACK_FOLLOWED,
-    CONF_UPDATE_INTERVAL,
     CONF_UID,
+    CONF_UPDATE_INTERVAL,
     DEFAULT_NEW_CITY_DAYS,
     DEFAULT_NEWS_DAYS,
     DEFAULT_TRACK_FOLLOWED,
     DEFAULT_UPDATE_INTERVAL_MINUTES,
-    MIN_UPDATE_INTERVAL_MINUTES,
     DOMAIN,
+    MIN_UPDATE_INTERVAL_MINUTES,
 )
 from .exceptions import AuthenticationError, InvaderTrackerConnectionError
 
@@ -79,10 +80,12 @@ NEW_CITY_DAYS_OPTIONS: dict[str, str] = {
 
 def _select(options: dict[str, str], default: str) -> SelectSelector:
     """Build a dropdown SelectSelector from a {value: label} dict."""
-    return SelectSelector(SelectSelectorConfig(
-        options=[SelectOptionDict(value=v, label=label) for v, label in options.items()],
-        mode=SelectSelectorMode.DROPDOWN,
-    ))
+    return SelectSelector(
+        SelectSelectorConfig(
+            options=[SelectOptionDict(value=v, label=label) for v, label in options.items()],
+            mode=SelectSelectorMode.DROPDOWN,
+        )
+    )
 
 
 def _interval_selector() -> SelectSelector:
@@ -105,12 +108,14 @@ def _validate_uid(uid: str) -> bool:
 
 def _custom_interval_schema(current: int) -> vol.Schema:
     """Build the custom interval free-text input schema."""
-    return vol.Schema({
-        vol.Required(CONF_UPDATE_INTERVAL, default=current): vol.All(
-            vol.Coerce(int),
-            vol.Range(min=MIN_UPDATE_INTERVAL_MINUTES),
-        ),
-    })
+    return vol.Schema(
+        {
+            vol.Required(CONF_UPDATE_INTERVAL, default=current): vol.All(
+                vol.Coerce(int),
+                vol.Range(min=MIN_UPDATE_INTERVAL_MINUTES),
+            ),
+        }
+    )
 
 
 class InvaderTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -131,9 +136,7 @@ class InvaderTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
         """Get the options flow for this handler."""
         return InvaderTrackerOptionsFlow(config_entry)
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle the initial step - UID entry."""
         errors: dict[str, str] = {}
 
@@ -152,7 +155,7 @@ class InvaderTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
                     errors["base"] = "invalid_uid"
                 except InvaderTrackerConnectionError:
                     errors["base"] = "cannot_connect"
-                except Exception:  # noqa: BLE001
+                except Exception:
                     _LOGGER.exception("Unexpected error validating UID")
                     errors["base"] = "unknown"
 
@@ -166,9 +169,7 @@ class InvaderTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_awazleon_key(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_awazleon_key(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle the optional Awazleon API key step.
 
         Leaving the key blank disables Awazleon data entirely.
@@ -179,14 +180,14 @@ class InvaderTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="awazleon_key",
-            data_schema=vol.Schema({
-                vol.Optional(CONF_AWAZLEON_API_KEY, default=""): str,
-            }),
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(CONF_AWAZLEON_API_KEY, default=""): str,
+                }
+            ),
         )
 
-    async def async_step_cities(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_cities(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle city selection + interval choice step."""
         errors: dict[str, str] = {}
 
@@ -196,9 +197,7 @@ class InvaderTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
             if not selected_cities:
                 errors["base"] = "no_cities_selected"
             else:
-                cities = {
-                    code: self._cities.get(code, code) for code in selected_cities
-                }
+                cities = {code: self._cities.get(code, code) for code in selected_cities}
                 chosen_val = user_input.get(CONF_UPDATE_INTERVAL, _CUSTOM_SENTINEL)
 
                 self._pending_data = {
@@ -227,7 +226,7 @@ class InvaderTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
             try:
                 cities_list = await awazleon.get_cities()
                 self._cities = {c.code: c.name for c in cities_list}
-            except Exception:  # noqa: BLE001
+            except Exception:
                 _LOGGER.exception("Unexpected error fetching cities")
                 errors["base"] = "cannot_connect_spotter"
                 self._cities = {}
@@ -239,19 +238,19 @@ class InvaderTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="cities",
-            data_schema=vol.Schema({
-                vol.Required(CONF_CITIES): cv.multi_select(city_options),
-                vol.Required(
-                    CONF_UPDATE_INTERVAL,
-                    default=_interval_default(DEFAULT_UPDATE_INTERVAL_MINUTES),
-                ): _interval_selector(),
-            }),
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_CITIES): cv.multi_select(city_options),
+                    vol.Required(
+                        CONF_UPDATE_INTERVAL,
+                        default=_interval_default(DEFAULT_UPDATE_INTERVAL_MINUTES),
+                    ): _interval_selector(),
+                }
+            ),
             errors=errors,
         )
 
-    async def async_step_custom_interval(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_custom_interval(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle custom interval entry (config flow)."""
         errors: dict[str, str] = {}
 
@@ -273,15 +272,11 @@ class InvaderTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_reauth(
-        self, entry_data: dict[str, Any]
-    ) -> ConfigFlowResult:
+    async def async_step_reauth(self, entry_data: dict[str, Any]) -> ConfigFlowResult:
         """Handle reauthorization."""
         return await self.async_step_reauth_confirm()
 
-    async def async_step_reauth_confirm(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_reauth_confirm(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle reauth confirmation."""
         errors: dict[str, str] = {}
 
@@ -310,9 +305,7 @@ class InvaderTrackerConfigFlow(ConfigFlow, domain=DOMAIN):
                             existing_entry,
                             data={**existing_entry.data, CONF_UID: uid},
                         )
-                        await self.hass.config_entries.async_reload(
-                            existing_entry.entry_id
-                        )
+                        await self.hass.config_entries.async_reload(existing_entry.entry_id)
                         return self.async_abort(reason="reauth_successful")
 
         return self.async_show_form(
@@ -333,16 +326,11 @@ class InvaderTrackerOptionsFlow(OptionsFlow):
 
     def _get_current_cities(self) -> dict[str, str]:
         """Get currently configured cities (options override data)."""
-        return (
-            self._config_entry.options.get(CONF_CITIES)
-            or self._config_entry.data.get(CONF_CITIES, {})
-        )
+        return self._config_entry.options.get(CONF_CITIES) or self._config_entry.data.get(CONF_CITIES, {})
 
     def _get_current_value(self, key: str, default: Any) -> Any:
         """Get current config value (options override data)."""
-        return self._config_entry.options.get(
-            key, self._config_entry.data.get(key, default)
-        )
+        return self._config_entry.options.get(key, self._config_entry.data.get(key, default))
 
     def _get_current_interval(self) -> int:
         """Return current update interval in minutes, migrating legacy values."""
@@ -362,9 +350,7 @@ class InvaderTrackerOptionsFlow(OptionsFlow):
         )
         return min(int(scrape_h), int(api_h)) * 60
 
-    async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle options flow - city selection and interval."""
         errors: dict[str, str] = {}
 
@@ -387,14 +373,12 @@ class InvaderTrackerOptionsFlow(OptionsFlow):
                         errors[CONF_UID] = "invalid_uid"
                     except InvaderTrackerConnectionError:
                         errors[CONF_UID] = "cannot_connect"
-                    except Exception:  # noqa: BLE001
+                    except Exception:
                         _LOGGER.exception("Unexpected error validating UID")
                         errors[CONF_UID] = "unknown"
 
                 if not errors:
-                    cities = {
-                        code: self._cities.get(code, code) for code in selected_cities
-                    }
+                    cities = {code: self._cities.get(code, code) for code in selected_cities}
                     chosen_val = user_input.get(CONF_UPDATE_INTERVAL, _CUSTOM_SENTINEL)
                     # news_days and new_city_days are stored as str from SelectSelector → convert to int
                     news_val = user_input.get(CONF_NEWS_DAYS, str(DEFAULT_NEWS_DAYS))
@@ -433,7 +417,7 @@ class InvaderTrackerOptionsFlow(OptionsFlow):
             try:
                 cities_list = await awazleon.get_cities()
                 self._cities = {c.code: c.name for c in cities_list}
-            except Exception:  # noqa: BLE001
+            except Exception:
                 _LOGGER.exception("Error fetching cities for options")
                 self._cities = self._get_current_cities()
         else:
@@ -449,38 +433,36 @@ class InvaderTrackerOptionsFlow(OptionsFlow):
 
         return self.async_show_form(
             step_id="init",
-            data_schema=vol.Schema({
-                vol.Required(CONF_UID, default=current_uid): str,
-                vol.Required(
-                    CONF_CITIES, default=current_cities
-                ): cv.multi_select(city_options),
-                vol.Optional(
-                    CONF_AWAZLEON_API_KEY,
-                    default=self._get_current_value(CONF_AWAZLEON_API_KEY, ""),
-                ): str,
-                vol.Required(
-                    CONF_UPDATE_INTERVAL,
-                    default=_interval_default(current_interval),
-                ): _interval_selector(),
-                vol.Optional(
-                    CONF_NEWS_DAYS,
-                    default=str(current_news_days),
-                ): _select(NEWS_DAYS_OPTIONS, str(DEFAULT_NEWS_DAYS)),
-                vol.Optional(
-                    CONF_NEW_CITY_DAYS,
-                    default=str(current_new_city_days),
-                ): _select(NEW_CITY_DAYS_OPTIONS, str(DEFAULT_NEW_CITY_DAYS)),
-                vol.Optional(
-                    CONF_TRACK_FOLLOWED,
-                    default=self._get_current_value(CONF_TRACK_FOLLOWED, DEFAULT_TRACK_FOLLOWED),
-                ): bool,
-            }),
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_UID, default=current_uid): str,
+                    vol.Required(CONF_CITIES, default=current_cities): cv.multi_select(city_options),
+                    vol.Optional(
+                        CONF_AWAZLEON_API_KEY,
+                        default=self._get_current_value(CONF_AWAZLEON_API_KEY, ""),
+                    ): str,
+                    vol.Required(
+                        CONF_UPDATE_INTERVAL,
+                        default=_interval_default(current_interval),
+                    ): _interval_selector(),
+                    vol.Optional(
+                        CONF_NEWS_DAYS,
+                        default=str(current_news_days),
+                    ): _select(NEWS_DAYS_OPTIONS, str(DEFAULT_NEWS_DAYS)),
+                    vol.Optional(
+                        CONF_NEW_CITY_DAYS,
+                        default=str(current_new_city_days),
+                    ): _select(NEW_CITY_DAYS_OPTIONS, str(DEFAULT_NEW_CITY_DAYS)),
+                    vol.Optional(
+                        CONF_TRACK_FOLLOWED,
+                        default=self._get_current_value(CONF_TRACK_FOLLOWED, DEFAULT_TRACK_FOLLOWED),
+                    ): bool,
+                }
+            ),
             errors=errors,
         )
 
-    async def async_step_custom_interval(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_custom_interval(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle custom interval entry (options flow)."""
         errors: dict[str, str] = {}
         current_interval = self._get_current_interval()
@@ -493,8 +475,7 @@ class InvaderTrackerOptionsFlow(OptionsFlow):
         return self.async_show_form(
             step_id="custom_interval",
             data_schema=_custom_interval_schema(
-                current_interval if current_interval >= MIN_UPDATE_INTERVAL_MINUTES
-                else DEFAULT_UPDATE_INTERVAL_MINUTES
+                current_interval if current_interval >= MIN_UPDATE_INTERVAL_MINUTES else DEFAULT_UPDATE_INTERVAL_MINUTES
             ),
             errors=errors,
         )

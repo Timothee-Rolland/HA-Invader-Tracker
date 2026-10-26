@@ -1,4 +1,5 @@
 """Tests for DataProcessor."""
+
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta
@@ -37,14 +38,19 @@ def mock_spotter_coordinator() -> MagicMock:
 def mock_flash_coordinator() -> MagicMock:
     """Create a mock FlashInvaderCoordinator."""
     coordinator = MagicMock()
-    coordinator.get_flashed_for_city = MagicMock(return_value=[
-        FlashedInvader(
-            id="PA_001", name="PA_001", city_id=1, points=10,
-            image_url="https://example.com/pa001.jpg",
-            install_date=date(2000, 1, 1),
-            flash_date=datetime(2024, 1, 15, 10, 30, 0),
-        ),
-    ])
+    coordinator.get_flashed_for_city = MagicMock(
+        return_value=[
+            FlashedInvader(
+                id="PA_001",
+                name="PA_001",
+                city_id=1,
+                points=10,
+                image_url="https://example.com/pa001.jpg",
+                install_date=date(2000, 1, 1),
+                flash_date=datetime(2024, 1, 15, 10, 30, 0),
+            ),
+        ]
+    )
     return coordinator
 
 
@@ -99,9 +105,7 @@ class TestComputeCityStats:
         stats = processor.compute_city_stats("LYN")
         assert stats.total_count == 0
 
-    def test_news_based_new_invaders(
-        self, processor: DataProcessor, mock_spotter_coordinator
-    ) -> None:
+    def test_news_based_new_invaders(self, processor: DataProcessor, mock_spotter_coordinator) -> None:
         """Test that new invaders come from news events."""
         news_events = [
             NewsEvent(
@@ -117,9 +121,7 @@ class TestComputeCityStats:
         assert stats.new_count == 1
         assert stats.new_invaders[0].id == "PA_002"
 
-    def test_news_based_reactivated(
-        self, processor: DataProcessor, mock_spotter_coordinator
-    ) -> None:
+    def test_news_based_reactivated(self, processor: DataProcessor, mock_spotter_coordinator) -> None:
         """Test that reactivated invaders come from news events."""
         news_events = [
             NewsEvent(
@@ -145,9 +147,7 @@ class TestDetectChanges:
         assert changes.new_invaders == []
         assert changes.reactivated_invaders == []
 
-    def test_with_previous_snapshot(
-        self, processor: DataProcessor
-    ) -> None:
+    def test_with_previous_snapshot(self, processor: DataProcessor) -> None:
         """Test change detection with previous snapshot."""
         # Create a snapshot where PA_002 was first seen recently
         now = datetime.now()
@@ -176,8 +176,11 @@ class TestDetectChanges:
         now = datetime.now()
         # PA_003 was previously DESTROYED, now it's OK in the data
         processor._spotter.data["PA"][2] = Invader(
-            id="PA_003", city_code="PA", city_name="Paris",
-            points=30, status=InvaderStatus.OK,
+            id="PA_003",
+            city_code="PA",
+            city_name="Paris",
+            points=30,
+            status=InvaderStatus.OK,
         )
         processor._previous_snapshot = StateSnapshot(
             timestamp=now - timedelta(hours=1),
@@ -219,9 +222,7 @@ class TestAsyncSaveSnapshot:
     """Tests for async_save_snapshot."""
 
     @pytest.mark.asyncio
-    async def test_save_snapshot(
-        self, processor: DataProcessor, mock_store
-    ) -> None:
+    async def test_save_snapshot(self, processor: DataProcessor, mock_store) -> None:
         """Test saving a snapshot."""
         await processor.async_save_snapshot()
 
@@ -234,9 +235,7 @@ class TestAsyncSaveSnapshot:
         assert saved_snapshot.status_by_invader["PA_001"] == InvaderStatus.OK
 
     @pytest.mark.asyncio
-    async def test_save_preserves_first_seen(
-        self, processor: DataProcessor, mock_store
-    ) -> None:
+    async def test_save_preserves_first_seen(self, processor: DataProcessor, mock_store) -> None:
         """Test that first_seen dates are preserved across saves."""
         old_time = datetime(2024, 1, 1)
         processor._previous_snapshot = StateSnapshot(
@@ -256,9 +255,7 @@ class TestAsyncSaveSnapshot:
         assert "PA_003" in saved.first_seen_date
 
     @pytest.mark.asyncio
-    async def test_save_no_data(
-        self, processor: DataProcessor, mock_store, mock_spotter_coordinator
-    ) -> None:
+    async def test_save_no_data(self, processor: DataProcessor, mock_store, mock_spotter_coordinator) -> None:
         """Test saving when spotter has no data."""
         mock_spotter_coordinator.data = None
 
@@ -278,9 +275,7 @@ class TestGetTotalStats:
         assert totals["unflashed"] == 1  # PA_002 (OK, not flashed)
         assert totals["gone"] == 1  # PA_003 (DESTROYED, not flashed)
 
-    def test_total_stats_no_data(
-        self, processor: DataProcessor, mock_spotter_coordinator
-    ) -> None:
+    def test_total_stats_no_data(self, processor: DataProcessor, mock_spotter_coordinator) -> None:
         """Test aggregate stats with no data."""
         mock_spotter_coordinator.data = None
         totals = processor.get_total_stats()
@@ -313,9 +308,7 @@ class TestAsyncInitialize:
     """Tests for async_initialize."""
 
     @pytest.mark.asyncio
-    async def test_initialize_loads_snapshot(
-        self, processor: DataProcessor, mock_store
-    ) -> None:
+    async def test_initialize_loads_snapshot(self, processor: DataProcessor, mock_store) -> None:
         """Test that initialize loads previous snapshot."""
         old_snapshot = StateSnapshot(
             timestamp=datetime(2024, 1, 1),
@@ -330,9 +323,7 @@ class TestAsyncInitialize:
         mock_store.async_load_snapshot.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_initialize_no_previous_snapshot(
-        self, processor: DataProcessor, mock_store
-    ) -> None:
+    async def test_initialize_no_previous_snapshot(self, processor: DataProcessor, mock_store) -> None:
         """Test initialize when no previous snapshot exists."""
         mock_store.async_load_snapshot = AsyncMock(return_value=None)
 

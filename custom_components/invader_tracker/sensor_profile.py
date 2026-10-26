@@ -1,4 +1,5 @@
 """Profile sensor entities for Invader Tracker integration."""
+
 from __future__ import annotations
 
 import logging
@@ -41,11 +42,13 @@ async def async_setup_profile_entities(
 
     if coordinator.track_followed and coordinator.data:
         for player in coordinator.followed_players:
-            entities.extend([
-                FollowedPlayerScoreSensor(coordinator, entry, player.name),
-                FollowedPlayerRankSensor(coordinator, entry, player.name),
-                FollowedPlayerInvadersFoundSensor(coordinator, entry, player.name),
-            ])
+            entities.extend(
+                [
+                    FollowedPlayerScoreSensor(coordinator, entry, player.name),
+                    FollowedPlayerRankSensor(coordinator, entry, player.name),
+                    FollowedPlayerInvadersFoundSensor(coordinator, entry, player.name),
+                ]
+            )
 
     async_add_entities(entities)
 
@@ -78,6 +81,7 @@ def _followed_device_info(entry: ConfigEntry, player_name: str) -> DeviceInfo:
 # ---------------------------------------------------------------------------
 # Main player profile sensors
 # ---------------------------------------------------------------------------
+
 
 class ProfileBaseSensor(CoordinatorEntity["FlashInvaderProfileCoordinator"], SensorEntity):
     """Base class for main profile sensors."""
@@ -250,6 +254,7 @@ class PlayerTotalWorldSensor(ProfileBaseSensor):
 # ---------------------------------------------------------------------------
 # Followed player sensors
 # ---------------------------------------------------------------------------
+
 
 class FollowedPlayerBaseSensor(CoordinatorEntity["FlashInvaderProfileCoordinator"], SensorEntity):
     """Base class for followed player sensors."""

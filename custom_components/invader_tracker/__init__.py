@@ -1,4 +1,5 @@
 """The Invader Tracker integration."""
+
 from __future__ import annotations
 
 import logging
@@ -19,8 +20,8 @@ from .const import (
     CONF_NEWS_DAYS,
     CONF_SCRAPE_INTERVAL,
     CONF_TRACK_FOLLOWED,
-    CONF_UPDATE_INTERVAL,
     CONF_UID,
+    CONF_UPDATE_INTERVAL,
     DEFAULT_API_INTERVAL_HOURS,
     DEFAULT_NEW_CITY_DAYS,
     DEFAULT_NEWS_DAYS,
@@ -52,31 +53,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Unified update interval (minutes). Migrate legacy hour-based keys if needed.
     if CONF_UPDATE_INTERVAL in entry.options or CONF_UPDATE_INTERVAL in entry.data:
-        update_interval_minutes = int(
-            entry.options.get(CONF_UPDATE_INTERVAL, entry.data.get(CONF_UPDATE_INTERVAL))
-        )
+        update_interval_minutes = int(entry.options.get(CONF_UPDATE_INTERVAL, entry.data.get(CONF_UPDATE_INTERVAL)))
     else:
         # Migrate: take the smaller of legacy scrape_interval / api_interval (both in hours)
         scrape_h = entry.options.get(
             CONF_SCRAPE_INTERVAL, entry.data.get(CONF_SCRAPE_INTERVAL, DEFAULT_SCRAPE_INTERVAL_HOURS)
         )
-        api_h = entry.options.get(
-            CONF_API_INTERVAL, entry.data.get(CONF_API_INTERVAL, DEFAULT_API_INTERVAL_HOURS)
-        )
+        api_h = entry.options.get(CONF_API_INTERVAL, entry.data.get(CONF_API_INTERVAL, DEFAULT_API_INTERVAL_HOURS))
         update_interval_minutes = min(int(scrape_h), int(api_h)) * 60
 
-    news_days = entry.options.get(
-        CONF_NEWS_DAYS,
-        entry.data.get(CONF_NEWS_DAYS, DEFAULT_NEWS_DAYS)
-    )
-    new_city_days = entry.options.get(
-        CONF_NEW_CITY_DAYS,
-        entry.data.get(CONF_NEW_CITY_DAYS, DEFAULT_NEW_CITY_DAYS)
-    )
-    track_followed = entry.options.get(
-        CONF_TRACK_FOLLOWED,
-        entry.data.get(CONF_TRACK_FOLLOWED, DEFAULT_TRACK_FOLLOWED)
-    )
+    news_days = entry.options.get(CONF_NEWS_DAYS, entry.data.get(CONF_NEWS_DAYS, DEFAULT_NEWS_DAYS))
+    new_city_days = entry.options.get(CONF_NEW_CITY_DAYS, entry.data.get(CONF_NEW_CITY_DAYS, DEFAULT_NEW_CITY_DAYS))
+    track_followed = entry.options.get(CONF_TRACK_FOLLOWED, entry.data.get(CONF_TRACK_FOLLOWED, DEFAULT_TRACK_FOLLOWED))
 
     # Create API clients
     flash_api = FlashInvaderAPI(session, uid)
@@ -153,9 +141,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Set up platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    _LOGGER.info(
-        "Invader Tracker setup complete: tracking %d cities", len(cities)
-    )
+    _LOGGER.info("Invader Tracker setup complete: tracking %d cities", len(cities))
     return True
 
 
@@ -195,9 +181,7 @@ async def async_update_options(hass: HomeAssistant, entry: ConfigEntry) -> None:
         for city_code in removed_cities:
             device_id = f"{entry.entry_id}_{city_code}"
             # Find device by identifier
-            device = device_registry.async_get_device(
-                identifiers={(DOMAIN, device_id)}
-            )
+            device = device_registry.async_get_device(identifiers={(DOMAIN, device_id)})
             if device:
                 device_registry.async_remove_device(device.id)
                 _LOGGER.debug("Removed device for city: %s", city_code)
