@@ -1,4 +1,5 @@
 """Data processor for Invader Tracker integration."""
+
 from __future__ import annotations
 
 import logging
@@ -14,7 +15,6 @@ from .models import (
     NewsEventType,
     StateSnapshot,
 )
-
 
 if TYPE_CHECKING:
     from .coordinator import FlashInvaderCoordinator, InvaderSpotterCoordinator
@@ -105,12 +105,9 @@ class DataProcessor:
         city_news = self._spotter.get_news_for_city(city_code, self._news_events)
 
         # Extract new and reactivated invaders from news
-        new_invaders = self._get_invaders_from_news(
-            all_invaders, city_news, NewsEventType.ADDED
-        )
+        new_invaders = self._get_invaders_from_news(all_invaders, city_news, NewsEventType.ADDED)
         reactivated_invaders = self._get_invaders_from_news(
-            all_invaders, city_news,
-            NewsEventType.REACTIVATED, NewsEventType.RESTORED
+            all_invaders, city_news, NewsEventType.REACTIVATED, NewsEventType.RESTORED
         )
 
         # Build city object
@@ -147,19 +144,11 @@ class DataProcessor:
 
         """
         # Get IDs from news events of the specified types
-        news_ids = {
-            event.invader_id
-            for event in news_events
-            if event.event_type in event_types
-        }
+        news_ids = {event.invader_id for event in news_events if event.event_type in event_types}
 
         # Find matching invaders
         invader_map = {inv.id: inv for inv in all_invaders}
-        return [
-            invader_map[inv_id]
-            for inv_id in news_ids
-            if inv_id in invader_map
-        ]
+        return [invader_map[inv_id] for inv_id in news_ids if inv_id in invader_map]
 
     def _get_invaders_for_city(self, city_code: str) -> list[Invader]:
         """Get invaders for a city from spotter coordinator."""
@@ -186,9 +175,7 @@ class DataProcessor:
             return ChangeSet()
 
         # Get recently added invaders (first seen within N days)
-        new_invaders = self._previous_snapshot.get_recently_added(
-            current_invaders, days=recently_added_days
-        )
+        new_invaders = self._previous_snapshot.get_recently_added(current_invaders, days=recently_added_days)
 
         # Get reactivated invaders (status changed from non-flashable to flashable)
         reactivated = self._previous_snapshot.get_reactivated(current_invaders)
@@ -209,7 +196,7 @@ class DataProcessor:
 
     async def async_save_snapshot(self) -> None:
         """Save current state as snapshot for future comparison.
-        
+
         This preserves first_seen dates and tracks status changes.
         """
         if self._spotter.data is None:
@@ -217,18 +204,11 @@ class DataProcessor:
             return
 
         now = datetime.now()
-        
+
         # Build current IDs and statuses
-        current_ids_by_city = {
-            city: {inv.id for inv in invaders}
-            for city, invaders in self._spotter.data.items()
-        }
-        current_status = {
-            inv.id: inv.status
-            for invaders in self._spotter.data.values()
-            for inv in invaders
-        }
-        
+        current_ids_by_city = {city: {inv.id for inv in invaders} for city, invaders in self._spotter.data.items()}
+        current_status = {inv.id: inv.status for invaders in self._spotter.data.values() for inv in invaders}
+
         # Preserve first_seen dates from previous snapshot, add new ones
         first_seen = {}
         if self._previous_snapshot:
@@ -248,13 +228,14 @@ class DataProcessor:
             previous_status = dict(self._previous_snapshot.previous_status)
 
         for inv_id, status in current_status.items():
-            previous_inv_status = self._previous_snapshot.status_by_invader.get(inv_id) if self._previous_snapshot else None
+            previous_inv_status = (
+                self._previous_snapshot.status_by_invader.get(inv_id) if self._previous_snapshot else None
+            )
             if previous_inv_status and previous_inv_status != status:
                 # Status changed - record the old status for reactivation detection
                 previous_status[inv_id] = previous_inv_status
                 _LOGGER.info(
-                    "Status change detected: %s went from %s to %s",
-                    inv_id, previous_inv_status.value, status.value
+                    "Status change detected: %s went from %s to %s", inv_id, previous_inv_status.value, status.value
                 )
 
         # Update city_first_seen: preserve existing entries, add newly discovered cities

@@ -1,4 +1,5 @@
 """World aggregate sensor entities for Invader Tracker integration."""
+
 from __future__ import annotations
 
 import logging
@@ -42,15 +43,17 @@ async def async_setup_world_entities(
     coordinator: InvaderSpotterCoordinator = runtime_data["spotter_coordinator"]
     processor: DataProcessor = runtime_data["processor"]
 
-    async_add_entities([
-        WorldTotalSensor(coordinator, processor, entry),
-        WorldFlashedSensor(coordinator, processor, entry),
-        WorldUnflashedSensor(coordinator, processor, entry),
-        WorldUnflashedGoneSensor(coordinator, processor, entry),
-        WorldNewSensor(coordinator, processor, entry),
-        WorldToFlashSensor(coordinator, processor, entry),
-        WorldNewCitySensor(coordinator, processor, entry),
-    ])
+    async_add_entities(
+        [
+            WorldTotalSensor(coordinator, processor, entry),
+            WorldFlashedSensor(coordinator, processor, entry),
+            WorldUnflashedSensor(coordinator, processor, entry),
+            WorldUnflashedGoneSensor(coordinator, processor, entry),
+            WorldNewSensor(coordinator, processor, entry),
+            WorldToFlashSensor(coordinator, processor, entry),
+            WorldNewCitySensor(coordinator, processor, entry),
+        ]
+    )
 
 
 class WorldBaseSensor(CoordinatorEntity, SensorEntity):
@@ -222,10 +225,7 @@ class WorldToFlashSensor(CoordinatorEntity, SensorEntity):
         if not self.available:
             return None
         stats = self._processor.compute_world_stats()
-        to_flash_ids = (
-            [inv.id for inv in stats.unflashed_new]
-            + [inv.id for inv in stats.unflashed_reactivated]
-        )
+        to_flash_ids = [inv.id for inv in stats.unflashed_new] + [inv.id for inv in stats.unflashed_reactivated]
         return ", ".join(to_flash_ids) if to_flash_ids else None
 
 
@@ -260,10 +260,7 @@ class WorldNewCitySensor(CoordinatorEntity, SensorEntity):
 
     @property
     def available(self) -> bool:
-        return (
-            self.coordinator.last_update_success
-            and self.coordinator.data is not None
-        )
+        return self.coordinator.last_update_success and self.coordinator.data is not None
 
     @property
     def native_value(self) -> str | None:

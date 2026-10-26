@@ -1,6 +1,6 @@
 """Tests for data models."""
-from datetime import datetime
 
+from datetime import datetime
 
 from custom_components.invader_tracker.models import (
     City,

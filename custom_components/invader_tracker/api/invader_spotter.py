@@ -1,4 +1,5 @@
 """Invader Spotter scraper."""
+
 from __future__ import annotations
 
 import asyncio
@@ -30,9 +31,18 @@ MONTH_PATTERN = re.compile(
 )
 # Month name to number mapping
 MONTH_NAMES = {
-    "janvier": 1, "février": 2, "mars": 3, "avril": 4,
-    "mai": 5, "juin": 6, "juillet": 7, "août": 8,
-    "septembre": 9, "octobre": 10, "novembre": 11, "décembre": 12,
+    "janvier": 1,
+    "février": 2,
+    "mars": 3,
+    "avril": 4,
+    "mai": 5,
+    "juin": 6,
+    "juillet": 7,
+    "août": 8,
+    "septembre": 9,
+    "octobre": 10,
+    "novembre": 11,
+    "décembre": 12,
 }
 
 # News event type keywords (French)
@@ -103,25 +113,26 @@ class InvaderSpotterScraper:
                     timeout=aiohttp.ClientTimeout(total=60),
                 ) as response:
                     if response.status != 200:
-                        raise InvaderSpotterConnectionError(
-                            f"HTTP {response.status} fetching cities"
-                        )
+                        raise InvaderSpotterConnectionError(f"HTTP {response.status} fetching cities")
 
                     html_content = await response.text()
                     return self._parse_cities_page(html_content)
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 last_err = InvaderSpotterConnectionError("Timeout fetching cities")
                 _LOGGER.warning(
                     "Invader Spotter timeout fetching cities (attempt %d/%d)",
-                    attempt, SCRAPE_MAX_RETRIES,
+                    attempt,
+                    SCRAPE_MAX_RETRIES,
                 )
 
             except aiohttp.ClientError as err:
                 last_err = InvaderSpotterConnectionError(str(err))
                 _LOGGER.warning(
                     "Invader Spotter connection error fetching cities (attempt %d/%d): %s",
-                    attempt, SCRAPE_MAX_RETRIES, type(err).__name__,
+                    attempt,
+                    SCRAPE_MAX_RETRIES,
+                    type(err).__name__,
                 )
 
             if attempt < SCRAPE_MAX_RETRIES:
@@ -189,9 +200,7 @@ class InvaderSpotterScraper:
         max_pages = 100  # Safety limit
 
         while page <= max_pages:
-            invaders, has_more = await self._fetch_city_page(
-                city_code, city_name, page
-            )
+            invaders, has_more = await self._fetch_city_page(city_code, city_name, page)
             all_invaders.extend(invaders)
 
             if not has_more or not invaders:
@@ -204,15 +213,10 @@ class InvaderSpotterScraper:
             except asyncio.CancelledError:
                 raise
 
-        _LOGGER.debug(
-            "Fetched total %d invaders for %s across %d pages",
-            len(all_invaders), city_code, page
-        )
+        _LOGGER.debug("Fetched total %d invaders for %s across %d pages", len(all_invaders), city_code, page)
         return all_invaders
 
-    async def _fetch_city_page(
-        self, city_code: str, city_name: str, page: int
-    ) -> tuple[list[Invader], bool]:
+    async def _fetch_city_page(self, city_code: str, city_name: str, page: int) -> tuple[list[Invader], bool]:
         """Fetch a single page of invaders for a city, with retries.
 
         Returns:
@@ -241,27 +245,32 @@ class InvaderSpotterScraper:
                     timeout=aiohttp.ClientTimeout(total=60),
                 ) as response:
                     if response.status != 200:
-                        raise InvaderSpotterConnectionError(
-                            f"HTTP {response.status} for city {city_code} page {page}"
-                        )
+                        raise InvaderSpotterConnectionError(f"HTTP {response.status} for city {city_code} page {page}")
 
                     html_content = await response.text()
                     invaders = self._parse_city_page(html_content, city_code, city_name)
                     has_more = self._has_next_page(html_content, page)
                     return invaders, has_more
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 last_err = InvaderSpotterConnectionError(f"Timeout for {city_code}")
                 _LOGGER.warning(
                     "Invader Spotter timeout for city %s page %d (attempt %d/%d)",
-                    city_code, page, attempt, SCRAPE_MAX_RETRIES,
+                    city_code,
+                    page,
+                    attempt,
+                    SCRAPE_MAX_RETRIES,
                 )
 
             except aiohttp.ClientError as err:
                 last_err = InvaderSpotterConnectionError(str(err))
                 _LOGGER.warning(
                     "Invader Spotter connection error for %s page %d (attempt %d/%d): %s",
-                    city_code, page, attempt, SCRAPE_MAX_RETRIES, type(err).__name__,
+                    city_code,
+                    page,
+                    attempt,
+                    SCRAPE_MAX_RETRIES,
+                    type(err).__name__,
                 )
 
             if attempt < SCRAPE_MAX_RETRIES:
@@ -278,9 +287,7 @@ class InvaderSpotterScraper:
         pattern = rf"changepage\({current_page + 1}\)"
         return bool(re.search(pattern, html_content))
 
-    def _parse_city_page(
-        self, html_content: str, city_code: str, city_name: str
-    ) -> list[Invader]:
+    def _parse_city_page(self, html_content: str, city_code: str, city_name: str) -> list[Invader]:
         """Parse city invaders page."""
         soup = BeautifulSoup(html_content, "html.parser")
         invaders: list[Invader] = []
@@ -316,8 +323,7 @@ class InvaderSpotterScraper:
 
         if not invaders and entries:
             raise ParseError(
-                f"Found {len(entries)} entries for {city_code} but parsed 0 - "
-                "HTML structure may have changed"
+                f"Found {len(entries)} entries for {city_code} but parsed 0 - HTML structure may have changed"
             )
 
         _LOGGER.debug(
@@ -331,7 +337,7 @@ class InvaderSpotterScraper:
     def _find_invader_entries(self, soup: BeautifulSoup) -> list:
         """Find invader entry elements - each invader is in a <td> with rowspan."""
         entries = []
-        
+
         # The site structure: each invader is in a <td align="left" rowspan="2">
         # containing <b>XX_NN [pts]</b> and other info
         for td in soup.find_all("td", {"rowspan": "2"}):
@@ -339,7 +345,7 @@ class InvaderSpotterScraper:
             text = td.get_text()
             if re.search(r"[A-Z]{2,5}_\d{1,4}", text):
                 entries.append(td)
-        
+
         if entries:
             return entries
 
@@ -354,9 +360,7 @@ class InvaderSpotterScraper:
 
         return entries
 
-    def _parse_invader_entry(
-        self, entry, city_code: str, city_name: str
-    ) -> Invader | None:
+    def _parse_invader_entry(self, entry, city_code: str, city_name: str) -> Invader | None:
         """Parse a single invader entry."""
         text = entry.get_text(" ", strip=True)
         html_str = str(entry)
@@ -420,7 +424,7 @@ class InvaderSpotterScraper:
         """Extract status from HTML (checking images) or text."""
         html_lower = html_str.lower()
         text_lower = text.lower()
-        
+
         # Check for status images first (more reliable)
         if "spot_invader_destroyed" in html_lower:
             return InvaderStatus.DESTROYED
@@ -435,7 +439,7 @@ class InvaderSpotterScraper:
             return InvaderStatus.UNKNOWN
         if "spot_invader_notvisible" in html_lower or "non visible" in text_lower:
             return InvaderStatus.NOT_VISIBLE
-        
+
         # Fallback to text-based extraction
         return self._extract_status(text)
 
@@ -499,14 +503,12 @@ class InvaderSpotterScraper:
                 timeout=aiohttp.ClientTimeout(total=60),
             ) as response:
                 if response.status != 200:
-                    raise InvaderSpotterConnectionError(
-                        f"HTTP {response.status} fetching news"
-                    )
+                    raise InvaderSpotterConnectionError(f"HTTP {response.status} fetching news")
                 html_content = await response.text()
 
         except aiohttp.ClientError as err:
             raise InvaderSpotterConnectionError(f"Connection error: {err}") from err
-        except asyncio.TimeoutError as err:
+        except TimeoutError as err:
             raise InvaderSpotterConnectionError("Timeout fetching news") from err
 
         return self._parse_news(html_content, days, city_codes)

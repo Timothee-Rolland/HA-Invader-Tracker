@@ -1,4 +1,5 @@
 """Data models for Invader Tracker integration."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -120,20 +121,12 @@ class CityStats:
     @property
     def unflashed(self) -> list[Invader]:
         """Invaders not flashed AND still flashable."""
-        return [
-            inv
-            for inv in self.all_invaders
-            if inv.id not in self.flashed_ids and inv.is_flashable
-        ]
+        return [inv for inv in self.all_invaders if inv.id not in self.flashed_ids and inv.is_flashable]
 
     @property
     def unflashed_gone(self) -> list[Invader]:
         """Invaders not flashed AND no longer flashable (missed)."""
-        return [
-            inv
-            for inv in self.all_invaders
-            if inv.id not in self.flashed_ids and not inv.is_flashable
-        ]
+        return [inv for inv in self.all_invaders if inv.id not in self.flashed_ids and not inv.is_flashable]
 
     @property
     def total_count(self) -> int:
@@ -200,9 +193,7 @@ class StateSnapshot:
         previous = self.invader_ids_by_city.get(city_code, set())
         return current_ids - previous
 
-    def get_recently_added(
-        self, current_invaders: list[Invader], days: int = 30
-    ) -> list[Invader]:
+    def get_recently_added(self, current_invaders: list[Invader], days: int = 30) -> list[Invader]:
         """Return invaders first seen within the last N days."""
         cutoff = datetime.now() - timedelta(days=days)
         recently_added = []
@@ -222,6 +213,7 @@ class StateSnapshot:
             if prev_status in non_flashable and inv.status in flashable:
                 reactivated.append(inv)
         return reactivated
+
 
 @dataclass
 class ChangeSet:

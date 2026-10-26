@@ -1,4 +1,5 @@
 """World aggregate binary sensor for Invader Tracker integration."""
+
 from __future__ import annotations
 
 import logging
@@ -31,9 +32,11 @@ async def async_setup_world_binary_entities(
     coordinator: InvaderSpotterCoordinator = runtime_data["spotter_coordinator"]
     processor: DataProcessor = runtime_data["processor"]
 
-    async_add_entities([
-        WorldHasNewBinarySensor(coordinator, processor, entry),
-    ])
+    async_add_entities(
+        [
+            WorldHasNewBinarySensor(coordinator, processor, entry),
+        ]
+    )
 
 
 class WorldHasNewBinarySensor(CoordinatorEntity, BinarySensorEntity):

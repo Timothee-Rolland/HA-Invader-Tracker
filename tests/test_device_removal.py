@@ -1,4 +1,5 @@
 """Tests for city device removal functionality."""
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -59,11 +60,10 @@ async def test_city_removal_deletes_device() -> None:
         return_value=device_registry,
     ):
         from custom_components.invader_tracker import async_update_options
+
         await async_update_options(hass, entry)
 
-    device_registry.async_get_device.assert_called_once_with(
-        identifiers={(DOMAIN, f"{entry_id}_LYN")}
-    )
+    device_registry.async_get_device.assert_called_once_with(identifiers={(DOMAIN, f"{entry_id}_LYN")})
     device_registry.async_remove_device.assert_called_once_with("device_id_lyn")
 
     runtime_data = hass.data[DOMAIN][entry_id]
@@ -99,6 +99,7 @@ async def test_city_removal_no_device_found() -> None:
         return_value=device_registry,
     ):
         from custom_components.invader_tracker import async_update_options
+
         await async_update_options(hass, entry)
 
     device_registry.async_remove_device.assert_not_called()
@@ -132,6 +133,7 @@ async def test_city_addition_no_device_removal() -> None:
         return_value=device_registry,
     ):
         from custom_components.invader_tracker import async_update_options
+
         await async_update_options(hass, entry)
 
     device_registry.async_get_device.assert_not_called()

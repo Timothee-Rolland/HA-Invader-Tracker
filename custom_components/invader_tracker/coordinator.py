@@ -1,4 +1,5 @@
 """Data update coordinators for Invader Tracker integration."""
+
 from __future__ import annotations
 
 import asyncio
@@ -187,24 +188,29 @@ class InvaderSpotterCoordinator(DataUpdateCoordinator[dict[str, list[Invader]]])
         if failures:
             _LOGGER.warning(
                 "Awazleon partial update: %d fetched, %d cached, %d failed (%d total invaders)",
-                scraped_count, cached_count, len(failures), total_invaders,
+                scraped_count,
+                cached_count,
+                len(failures),
+                total_invaders,
             )
         else:
             _LOGGER.info(
                 "Awazleon update complete: %d fetched, %d cached (%d total invaders)",
-                scraped_count, cached_count, total_invaders,
+                scraped_count,
+                cached_count,
+                total_invaders,
             )
 
         return result
 
     async def get_news_events(self, days: int = 30) -> list[NewsEvent]:
         """Get news events from invader-spotter.art/news.php.
-        
+
         Uses caching to avoid hitting the site too frequently.
-        
+
         Args:
             days: Number of days of news to fetch
-            
+
         Returns:
             List of NewsEvent objects
         """
@@ -215,19 +221,19 @@ class InvaderSpotterCoordinator(DataUpdateCoordinator[dict[str, list[Invader]]])
             if age < timedelta(hours=self._news_cache_hours):
                 _LOGGER.debug("Using cached news (%d events)", len(cached_events))
                 return cached_events
-        
+
         try:
             # Get news filtered by our tracked cities
             city_codes = set(self._cities.keys())
             events = await self._scraper.get_news(days=days, city_codes=city_codes)
-            
+
             # Update cache
             self._news_cache = (datetime.now(), events)
             _LOGGER.info("Fetched %d news events for tracked cities", len(events))
-            
+
             return events
-            
-        except Exception as err:
+
+        except Exception as err:  # noqa: BLE001 - news is best-effort, never break the update
             _LOGGER.warning("Failed to fetch news: %s", err)
             # Return cached events if available
             if self._news_cache is not None:
@@ -237,11 +243,11 @@ class InvaderSpotterCoordinator(DataUpdateCoordinator[dict[str, list[Invader]]])
 
     def get_news_for_city(self, city_code: str, events: list[NewsEvent]) -> list[NewsEvent]:
         """Filter news events for a specific city.
-        
+
         Args:
             city_code: City code to filter by
             events: List of all news events
-            
+
         Returns:
             List of NewsEvent for this city
         """
@@ -307,9 +313,7 @@ class FlashInvaderCoordinator(DataUpdateCoordinator[list[FlashedInvader]]):
 
         except AuthenticationError as err:
             # Triggers HA reauth flow - user must reconfigure
-            raise ConfigEntryAuthFailed(
-                "Flash Invader authentication failed. Please reconfigure."
-            ) from err
+            raise ConfigEntryAuthFailed("Flash Invader authentication failed. Please reconfigure.") from err
 
         except RateLimitError as err:
             _LOGGER.warning("Rate limited, will retry later")
@@ -335,10 +339,7 @@ class FlashInvaderCoordinator(DataUpdateCoordinator[list[FlashedInvader]]):
         for inv in invaders:
             # Extract city code from ID (e.g., "PA_346" -> "PA")
             parts = inv.id.rsplit("_", 1)
-            if len(parts) == 2:
-                city_code = parts[0]
-            else:
-                city_code = inv.id[:2]  # Fallback to first 2 chars
+            city_code = parts[0] if len(parts) == 2 else inv.id[:2]  # Fallback to first 2 chars
 
             self._flashed_by_city.setdefault(city_code, []).append(inv)
 
@@ -411,7 +412,9 @@ class FlashInvaderProfileCoordinator(DataUpdateCoordinator[ProfileData]):
 
             _LOGGER.debug(
                 "Fetched profile for %s (rank %s) and %d followed players",
-                profile.name, profile.rank_str, len(followed),
+                profile.name,
+                profile.rank_str,
+                len(followed),
             )
 
             # Detect new followed players and trigger a config entry reload
@@ -425,18 +428,14 @@ class FlashInvaderProfileCoordinator(DataUpdateCoordinator[ProfileData]):
                     )
                     self._known_followed_names = current_names
                     if self._entry_id:
-                        self.hass.async_create_task(
-                            self.hass.config_entries.async_reload(self._entry_id)
-                        )
+                        self.hass.async_create_task(self.hass.config_entries.async_reload(self._entry_id))
                 else:
                     self._known_followed_names = current_names
 
             return profile, followed
 
         except AuthenticationError as err:
-            raise ConfigEntryAuthFailed(
-                "Flash Invader authentication failed. Please reconfigure."
-            ) from err
+            raise ConfigEntryAuthFailed("Flash Invader authentication failed. Please reconfigure.") from err
 
         except (InvaderTrackerConnectionError, ParseError) as err:
             raise UpdateFailed(f"Failed to fetch profile: {err}") from err
