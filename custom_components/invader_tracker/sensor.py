@@ -15,6 +15,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import (
     CONF_CITIES,
     DOMAIN,
+    MAX_LISTED_INVADERS,
     SENSOR_FLASHED,
     SENSOR_NEW,
     SENSOR_TO_FLASH,
@@ -25,9 +26,18 @@ from .const import (
 
 if TYPE_CHECKING:
     from .coordinator import FlashInvaderCoordinator, InvaderSpotterCoordinator
+    from .models import Invader
     from .processor import DataProcessor
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _invader_ids_attribute(invaders: list[Invader]) -> dict[str, Any]:
+    """Return the sorted invader IDs, capped so recorder keeps the attributes."""
+    ids = sorted(inv.id for inv in invaders)
+    if len(ids) > MAX_LISTED_INVADERS:
+        return {"invaders": ids[:MAX_LISTED_INVADERS], "invaders_truncated": True}
+    return {"invaders": ids}
 
 
 async def async_setup_entry(
@@ -251,6 +261,14 @@ class InvaderUnflashedSensor(InvaderBaseSensor):
         stats = self._processor.compute_city_stats(self._city_code)
         return stats.unflashed_count
 
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return the IDs of the invaders left to flash."""
+        if not self.available:
+            return {}
+        stats = self._processor.compute_city_stats(self._city_code)
+        return _invader_ids_attribute(stats.unflashed)
+
 
 class InvaderUnflashedGoneSensor(InvaderBaseSensor):
     """Sensor for unflashed and no longer available invaders."""
@@ -277,6 +295,14 @@ class InvaderUnflashedGoneSensor(InvaderBaseSensor):
             return None
         stats = self._processor.compute_city_stats(self._city_code)
         return stats.unflashed_gone_count
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return the IDs of the invaders that can no longer be flashed."""
+        if not self.available:
+            return {}
+        stats = self._processor.compute_city_stats(self._city_code)
+        return _invader_ids_attribute(stats.unflashed_gone)
 
 
 class InvaderNewSensor(InvaderBaseSensor):

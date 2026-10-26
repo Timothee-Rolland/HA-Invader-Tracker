@@ -10,6 +10,7 @@ from homeassistant.config_entries import ConfigEntry
 
 from custom_components.invader_tracker.const import (
     DOMAIN,
+    MAX_LISTED_INVADERS,
     SENSOR_TO_FLASH,
     SENSOR_TOTAL,
 )
@@ -176,9 +177,36 @@ class TestInvaderUnflashedSensor:
         assert sensor.native_value == 1
 
     def test_attributes(self, mock_coordinator, mock_processor, mock_entry) -> None:
-        """Test no extra attributes on unflashed sensor."""
+        """Test the unflashed sensor lists the IDs left to flash."""
         sensor = InvaderUnflashedSensor(mock_coordinator, mock_processor, mock_entry, "PA", "Paris")
-        assert sensor.extra_state_attributes is None or sensor.extra_state_attributes == {}
+        assert sensor.extra_state_attributes == {"invaders": ["PA_002"]}
+
+    def test_attributes_unavailable(self, mock_coordinator, mock_processor, mock_entry) -> None:
+        """Test no attributes when the sensor is unavailable."""
+        mock_coordinator.last_update_success = False
+        sensor = InvaderUnflashedSensor(mock_coordinator, mock_processor, mock_entry, "PA", "Paris")
+        assert sensor.extra_state_attributes == {}
+
+    def test_attributes_capped(self, mock_coordinator, mock_processor, mock_entry) -> None:
+        """Test the ID list is capped: recorder drops attributes over 16 KiB."""
+        stats = mock_processor.compute_city_stats.return_value
+        stats.all_invaders = [
+            Invader(
+                id=f"PA_{i}",
+                city_code="PA",
+                city_name="Paris",
+                points=10,
+                status=InvaderStatus.OK,
+            )
+            for i in range(MAX_LISTED_INVADERS + 100)
+        ]
+        stats.flashed_invaders = []
+
+        sensor = InvaderUnflashedSensor(mock_coordinator, mock_processor, mock_entry, "PA", "Paris")
+        attrs = sensor.extra_state_attributes
+
+        assert len(attrs["invaders"]) == MAX_LISTED_INVADERS
+        assert attrs["invaders_truncated"] is True
 
 
 class TestInvaderUnflashedGoneSensor:
@@ -191,9 +219,15 @@ class TestInvaderUnflashedGoneSensor:
         assert sensor.native_value == 1
 
     def test_attributes(self, mock_coordinator, mock_processor, mock_entry) -> None:
-        """Test no extra attributes on unflashed gone sensor."""
+        """Test the unflashed gone sensor lists the IDs that can no longer be flashed."""
         sensor = InvaderUnflashedGoneSensor(mock_coordinator, mock_processor, mock_entry, "PA", "Paris")
-        assert sensor.extra_state_attributes is None or sensor.extra_state_attributes == {}
+        assert sensor.extra_state_attributes == {"invaders": ["PA_003"]}
+
+    def test_attributes_unavailable(self, mock_coordinator, mock_processor, mock_entry) -> None:
+        """Test no attributes when the sensor is unavailable."""
+        mock_coordinator.last_update_success = False
+        sensor = InvaderUnflashedGoneSensor(mock_coordinator, mock_processor, mock_entry, "PA", "Paris")
+        assert sensor.extra_state_attributes == {}
 
 
 class TestInvaderNewSensor:

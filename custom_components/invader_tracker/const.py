@@ -54,6 +54,11 @@ SENSOR_NEW: Final = "new"
 SENSOR_TO_FLASH: Final = "to_flash"
 BINARY_SENSOR_HAS_NEW: Final = "has_new"
 
+# Recorder drops a state's attributes entirely past MAX_STATE_ATTRS_BYTES
+# (16 KiB). A fresh install tracking Paris has ~1600 unflashed invaders, which
+# overshoots it, so the listed IDs are capped well below that.
+MAX_LISTED_INVADERS: Final = 500
+
 # Rate limiting
 CITY_REQUEST_DELAY: Final = 2.0  # seconds between city requests
 

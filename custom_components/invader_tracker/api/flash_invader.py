@@ -54,7 +54,7 @@ class FlashInvaderAPI:
     def get_city_si_count(self, city_code: str) -> int | None:
         """Return total SI count for a city code, or None if unknown."""
         for city_id, code in self._city_code_by_id.items():
-            if code == city_code:
+            if code == city_code.upper():
                 return self._si_count_by_city_id.get(city_id)
         return None
 
@@ -163,7 +163,7 @@ class FlashInvaderAPI:
             if inv.city_id not in self._city_code_by_id:
                 parts = inv.id.rsplit("_", 1)
                 if len(parts) == 2:
-                    self._city_code_by_id[inv.city_id] = parts[0]
+                    self._city_code_by_id[inv.city_id] = parts[0].upper()
 
         _LOGGER.debug("Parsed %d flashed invaders (total worldwide: %d)", len(invaders), self._total_si_count)
         return invaders
