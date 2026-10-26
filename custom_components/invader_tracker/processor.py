@@ -14,6 +14,7 @@ from .models import (
     NewsEvent,
     NewsEventType,
     StateSnapshot,
+    normalize_invader_id,
 )
 
 if TYPE_CHECKING:
@@ -140,15 +141,15 @@ class DataProcessor:
             event_types: Event types to filter by
 
         Returns:
-            List of Invader objects that had matching news events
+            List of Invader objects that had matching news events, in the order
+            the city lists them
 
         """
-        # Get IDs from news events of the specified types
-        news_ids = {event.invader_id for event in news_events if event.event_type in event_types}
+        # news.php writes IDs as they were typed ("PA_08"), awazleon hands us
+        # de-padded ones ("PA_8"), so both sides go through the same key.
+        news_ids = {normalize_invader_id(event.invader_id) for event in news_events if event.event_type in event_types}
 
-        # Find matching invaders
-        invader_map = {inv.id: inv for inv in all_invaders}
-        return [invader_map[inv_id] for inv_id in news_ids if inv_id in invader_map]
+        return [inv for inv in all_invaders if normalize_invader_id(inv.id) in news_ids]
 
     def _get_invaders_for_city(self, city_code: str) -> list[Invader]:
         """Get invaders for a city from spotter coordinator."""
