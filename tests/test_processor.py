@@ -137,6 +137,52 @@ class TestComputeCityStats:
         assert len(stats.reactivated_invaders) == 1
         assert stats.reactivated_invaders[0].id == "PA_002"
 
+    def test_news_ids_are_matched_on_a_normalized_key(self, processor: DataProcessor, mock_spotter_coordinator) -> None:
+        """news.php writes "PA_08", awazleon hands us "PA_8" — same invader."""
+        mock_spotter_coordinator.data = {
+            "PA": [
+                Invader(id="PA_8", city_code="PA", city_name="Paris", points=10, status=InvaderStatus.OK),
+                Invader(id="PA_9", city_code="PA", city_name="Paris", points=20, status=InvaderStatus.OK),
+            ],
+        }
+        news_events = [
+            NewsEvent(
+                event_type=NewsEventType.ADDED,
+                invader_id="PA_08",
+                city_code="PA",
+                event_date=date.today(),
+            ),
+            NewsEvent(
+                event_type=NewsEventType.REACTIVATED,
+                invader_id="pa_009",
+                city_code="PA",
+                event_date=date.today(),
+            ),
+        ]
+        mock_spotter_coordinator.get_news_for_city = MagicMock(return_value=news_events)
+
+        stats = processor.compute_city_stats("PA")
+
+        assert [inv.id for inv in stats.new_invaders] == ["PA_8"]
+        assert [inv.id for inv in stats.reactivated_invaders] == ["PA_9"]
+
+    def test_news_matches_follow_the_city_order(self, processor: DataProcessor, mock_spotter_coordinator) -> None:
+        """Matches are returned in the city's order, not a set's iteration order."""
+        news_events = [
+            NewsEvent(
+                event_type=NewsEventType.ADDED,
+                invader_id=inv_id,
+                city_code="PA",
+                event_date=date.today(),
+            )
+            for inv_id in ("PA_003", "PA_001", "PA_002")
+        ]
+        mock_spotter_coordinator.get_news_for_city = MagicMock(return_value=news_events)
+
+        stats = processor.compute_city_stats("PA")
+
+        assert [inv.id for inv in stats.new_invaders] == ["PA_001", "PA_002", "PA_003"]
+
 
 class TestDetectChanges:
     """Tests for detect_changes."""

@@ -5,6 +5,13 @@ All notable changes to the Invader Tracker integration will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.1] - 2026-10-26
+
+### Fixed
+
+- **Invaders manquants dans `New & Reactivated` et `Invaders To Flash`** — `news.php` écrit les identifiants tels qu'ils ont été saisis (`PA_08`) alors qu'awazleon les renvoie dépaddés (`PA_8`). Le rapprochement se faisait sur les chaînes brutes : un ajout ou une réactivation annoncé avec un ID paddé ne retrouvait jamais l'invader correspondant et disparaissait silencieusement des deux capteurs, ainsi que de `binary_sensor.has_new`. Les deux côtés passent désormais par `normalize_invader_id()`, comme les compteurs flashés/non flashés depuis la 2.8.0.
+- `Invaders To Flash` liste maintenant les IDs dans l'ordre de la ville. Le rapprochement itérait un `set`, donc l'état du capteur pouvait changer d'une mise à jour à l'autre sans qu'aucune donnée n'ait bougé, polluant l'historique.
+
 ## [2.8.0] - 2026-10-26
 
 ### Fixed
