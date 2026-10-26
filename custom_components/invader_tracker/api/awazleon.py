@@ -9,7 +9,7 @@ import aiohttp
 
 from ..const import AWAZLEON_BASE_URL
 from ..exceptions import InvaderSpotterConnectionError, ParseError
-from ..models import City, Invader, InvaderStatus
+from ..models import City, Invader, InvaderStatus, normalize_invader_id
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -154,21 +154,6 @@ class AwazleonClient:
         )
         return invaders
 
-    @staticmethod
-    def _normalize_id(ref: str) -> str:
-        """Normalize awazleon ID to match Flash Invader format.
-
-        Awazleon pads single-digit numbers (e.g. "PA_01"), while Flash Invader
-        does not (e.g. "PA_1"). Strip leading zeros from the numeric part so
-        IDs match across both sources.
-        """
-        ref_upper = ref.upper()
-        # Split on the last underscore to get prefix + number
-        parts = ref_upper.rsplit("_", 1)
-        if len(parts) == 2 and parts[1].isdigit():
-            return f"{parts[0]}_{int(parts[1])}"
-        return ref_upper
-
     def _parse_invader(
         self,
         ref: str,
@@ -190,7 +175,7 @@ class AwazleonClient:
                     _LOGGER.debug("Could not parse invdate for %s: %s", ref, inv_date_str)
 
             return Invader(
-                id=self._normalize_id(ref),
+                id=normalize_invader_id(ref),
                 city_code=city_code.upper(),
                 city_name=city_name or city_code,
                 points=int(data.get("pts", 0)),

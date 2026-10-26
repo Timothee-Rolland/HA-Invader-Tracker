@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Attribut `invaders` sur `Unflashed (Available)` et `Unflashed (Gone)`** (devices ville) — la liste triée des IDs restant à flasher / définitivement perdus, pour les afficher dans une carte ou une automatisation.
+- **Attribut `invaders` sur `Unflashed (Available)` et `Unflashed (Gone)`** (devices ville) — la liste triée des IDs restant à flasher / définitivement perdus, pour les afficher dans une carte ou une automatisation. La liste est plafonnée à 500 IDs (`invaders_truncated: true` au-delà) : le recorder de Home Assistant jette l'intégralité des attributs d'une entité dès qu'ils dépassent 16 Kio, ce qu'une grosse ville atteint sur une installation neuve.
 
 ## [2.7.0] - 2026-06-06
 

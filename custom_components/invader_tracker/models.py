@@ -10,9 +10,10 @@ from enum import Enum
 def normalize_invader_id(inv_id: str) -> str:
     """Normalize an invader ID so IDs from different sources compare equal.
 
-    Awazleon pads the numeric part ("PA_01") while Flash Invader does not
-    ("PA_1"), and casing is not guaranteed either. Upper-case the reference
-    and strip the padding so both sources land on the same key.
+    Both upstreams pad the numeric part and are inconsistent about casing,
+    but only the awazleon client normalizes what it returns ("PA_01" ->
+    "PA_1"); the Flash Invader API is stored as received ("NA_01", "na_02").
+    Run every ID through this before comparing one source with the other.
     """
     ref = inv_id.strip().upper()
     prefix, _, number = ref.rpartition("_")

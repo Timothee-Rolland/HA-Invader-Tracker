@@ -121,6 +121,9 @@ For each tracked city, a dedicated device is created with:
 | `sensor.flashed` | Sensor | Invaders you've flashed | — |
 | `sensor.unflashed_available` | Sensor | Flashable invaders not yet done | `invaders` (list of IDs) |
 | `sensor.unflashed_gone` | Sensor | Destroyed invaders you missed | `invaders` (list of IDs) |
+
+> The `invaders` list is capped at 500 IDs, with `invaders_truncated: true` added when it is — past ~16 KB of attributes Home Assistant's recorder stores none of them at all.
+
 | `sensor.new_reactivated` | Sensor | New + reactivated unflashed invaders | `new_count`, `reactivated_count` |
 | `sensor.invaders_to_flash` | Sensor | CSV list of IDs to flash | — |
 | `binary_sensor.has_new` | Binary Sensor | ON when new/reactivated invaders exist | — |

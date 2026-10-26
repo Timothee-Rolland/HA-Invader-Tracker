@@ -82,6 +82,10 @@ sensor.city_{city}_unflashed_gone:
   invaders: ["OR_11", "OR_12"]    # Which ones
 ```
 
+`invaders` is capped at 500 IDs; past that, `invaders_truncated: true` is added
+(the recorder refuses to store attributes larger than 16 KB).
+
+
 List them in a Markdown card:
 
 ```yaml

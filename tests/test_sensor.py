@@ -10,6 +10,7 @@ from homeassistant.config_entries import ConfigEntry
 
 from custom_components.invader_tracker.const import (
     DOMAIN,
+    MAX_LISTED_INVADERS,
     SENSOR_TO_FLASH,
     SENSOR_TOTAL,
 )
@@ -185,6 +186,27 @@ class TestInvaderUnflashedSensor:
         mock_coordinator.last_update_success = False
         sensor = InvaderUnflashedSensor(mock_coordinator, mock_processor, mock_entry, "PA", "Paris")
         assert sensor.extra_state_attributes == {}
+
+    def test_attributes_capped(self, mock_coordinator, mock_processor, mock_entry) -> None:
+        """Test the ID list is capped: recorder drops attributes over 16 KiB."""
+        stats = mock_processor.compute_city_stats.return_value
+        stats.all_invaders = [
+            Invader(
+                id=f"PA_{i}",
+                city_code="PA",
+                city_name="Paris",
+                points=10,
+                status=InvaderStatus.OK,
+            )
+            for i in range(MAX_LISTED_INVADERS + 100)
+        ]
+        stats.flashed_invaders = []
+
+        sensor = InvaderUnflashedSensor(mock_coordinator, mock_processor, mock_entry, "PA", "Paris")
+        attrs = sensor.extra_state_attributes
+
+        assert len(attrs["invaders"]) == MAX_LISTED_INVADERS
+        assert attrs["invaders_truncated"] is True
 
 
 class TestInvaderUnflashedGoneSensor:
