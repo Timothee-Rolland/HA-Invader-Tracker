@@ -18,7 +18,7 @@ from .exceptions import (
     ParseError,
     RateLimitError,
 )
-from .models import FlashedInvader, FollowedPlayer, Invader, NewsEvent, PlayerProfile
+from .models import FlashedInvader, FollowedPlayer, Invader, NewsEvent, PlayerProfile, invader_city_code
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -337,10 +337,9 @@ class FlashInvaderCoordinator(DataUpdateCoordinator[list[FlashedInvader]]):
         self._flashed_by_city.clear()
 
         for inv in invaders:
-            # Extract city code from ID (e.g., "PA_346" -> "PA"), upper-cased so the
-            # grouping matches the awazleon city codes whatever casing the API returns
-            parts = inv.id.rsplit("_", 1)
-            city_code = (parts[0] if len(parts) == 2 else inv.id[:2]).upper()
+            # City code from the ID ("PA_346" -> "PA", "SPACE2ISS" -> "SPACE"),
+            # upper-cased to match the awazleon city codes
+            city_code = invader_city_code(inv.id)
 
             self._flashed_by_city.setdefault(city_code, []).append(inv)
 

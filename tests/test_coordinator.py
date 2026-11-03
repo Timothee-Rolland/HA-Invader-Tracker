@@ -242,6 +242,28 @@ class TestFlashInvaderCoordinator:
         unknown = coordinator.get_flashed_for_city("MRS")
         assert unknown == []
 
+    def test_space_invader_is_not_grouped_with_sao_paulo(self, mock_hass, mock_flash_api) -> None:
+        """An ID without underscore (SPACE2ISS) must not fall into São Paulo (SP)."""
+        coordinator = FlashInvaderCoordinator(mock_hass, mock_flash_api, 60)
+        invaders = [
+            FlashedInvader(
+                id="SPACE2ISS",
+                name="SPACE2ISS",
+                city_id=99,
+                points=100,
+                image_url="",
+                install_date=None,
+                flash_date=None,
+            ),
+            FlashedInvader(
+                id="SP_04", name="SP_04", city_id=7, points=20, image_url="", install_date=None, flash_date=None
+            ),
+        ]
+        coordinator._update_city_grouping(invaders)
+
+        assert [inv.id for inv in coordinator.get_flashed_for_city("SPACE")] == ["SPACE2ISS"]
+        assert [inv.id for inv in coordinator.get_flashed_for_city("SP")] == ["SP_04"]
+
     def test_update_city_grouping(self, mock_hass, mock_flash_api) -> None:
         """Test city grouping logic."""
         coordinator = FlashInvaderCoordinator(mock_hass, mock_flash_api, 60)

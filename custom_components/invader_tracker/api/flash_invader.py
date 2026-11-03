@@ -22,7 +22,7 @@ from ..exceptions import (
     ParseError,
     RateLimitError,
 )
-from ..models import FlashedInvader, FollowedPlayer, PlayerProfile
+from ..models import FlashedInvader, FollowedPlayer, PlayerProfile, normalize_invader_id
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -161,9 +161,9 @@ class FlashInvaderAPI:
         # Build city_id -> city_code mapping from flashed invaders IDs (e.g. "PA_593" + city_id=1 -> 1:"PA")
         for inv in invaders:
             if inv.city_id not in self._city_code_by_id:
-                parts = inv.id.rsplit("_", 1)
-                if len(parts) == 2:
-                    self._city_code_by_id[inv.city_id] = parts[0].upper()
+                prefix, _, _ = normalize_invader_id(inv.id).rpartition("_")
+                if prefix:
+                    self._city_code_by_id[inv.city_id] = prefix
 
         _LOGGER.debug("Parsed %d flashed invaders (total worldwide: %d)", len(invaders), self._total_si_count)
         return invaders
