@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Invader de l'espace compté à São Paulo** — les identifiants Flash Invader sans underscore (`SPACE2ISS`, l'invader de la Station spatiale internationale) étaient rangés par leurs deux premières lettres, donc dans la ville `SP` (São Paulo). São Paulo affichait un flashé de trop (1 + 15 + 37 = 53 pour un total de 52) et Space aucun. `normalize_invader_id()` réécrit maintenant ces IDs au format awazleon (`SPACE2ISS` → `SPACE_2`) et le regroupement par ville passe par la nouvelle fonction `invader_city_code()`.
 
+### Documentation
+
+- Tableau de bord vitrine prêt à coller (`docs/dashboard-example.yaml`), avec son guide et des captures. README mis à jour : identifiants d'entités par défaut, automatisations dans la syntaxe actuelle, liens vers `Timothee-Rolland/HA-Invader-Tracker` (#6).
+
 ## [2.8.1] - 2026-10-26
 
 ### Fixed
