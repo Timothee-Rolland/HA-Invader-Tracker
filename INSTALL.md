@@ -32,7 +32,7 @@ If you don't have HACS installed yet:
 3. Click **Integrations** in the left sidebar
 4. Click the three-dot menu **⋯** in the top right
 5. Select **Custom repositories**
-6. Paste the URL: `https://github.com/Trolent/HA-Invader-Tracker`
+6. Paste the URL: `https://github.com/Timothee-Rolland/HA-Invader-Tracker`
 7. Select category: **Integration**
 8. Click **CREATE**
 
@@ -49,7 +49,7 @@ For manual installation or if HACS is not available:
 
 #### Step 1: Download
 
-1. Go to [GitHub Releases](https://github.com/Trolent/HA-Invader-Tracker/releases)
+1. Go to [GitHub Releases](https://github.com/Timothee-Rolland/HA-Invader-Tracker/releases)
 2. Download the latest `invader_tracker.zip`
 3. Extract the archive
 
@@ -324,7 +324,7 @@ If you encounter issues:
 
 1. **Check logs:** **Settings** → **System** → **Logs**
 2. **Review documentation:** See [README.md](../README.md)
-3. **Open an issue:** [GitHub Issues](https://github.com/Trolent/HA-Invader-Tracker/issues)
+3. **Open an issue:** [GitHub Issues](https://github.com/Timothee-Rolland/HA-Invader-Tracker/issues)
 4. **Ask community:** [Home Assistant Forums](https://community.home-assistant.io/)
 
 Include in your issue:

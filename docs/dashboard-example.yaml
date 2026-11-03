@@ -1,0 +1,227 @@
+# Invader Tracker — showcase dashboard
+#
+# Requirements: the Invader Tracker integration and button-card (HACS → Frontend → "button-card").
+# Usage: Settings → Dashboards → Add dashboard → open it → ⋮ → Edit → ⋮ → Raw configuration editor,
+# then paste this file. Everything is discovered automatically from the integration's entities:
+#   - players:  every "User - <pseudo> Score" sensor and its _rank / _invaders_found siblings
+#   - cities:   every "City - <name> Total Invaders" sensor and its siblings
+# The optional city picker needs the helper and automation described in docs/dashboard.md.
+
+button_card_templates:
+  invader_panel:
+    show_icon: false
+    show_name: false
+    show_state: false
+    triggers_update: all
+    tap_action:
+      action: none
+    styles:
+      card:
+        - padding: 14px 16px
+        - white-space: normal
+      grid:
+        - grid-template-areas: '"x"'
+        - grid-template-columns: 1fr
+      custom_fields:
+        x:
+          - text-align: left
+          - width: 100%
+          - white-space: normal
+    grid_options:
+      columns: 12
+
+  invader_progress:
+    template: invader_panel
+    variables:
+      city: ''   # empty = world total
+    custom_fields:
+      x: |
+          [[[
+          const n = x => { const v = parseFloat(x && x.state); return isNaN(v) ? 0 : v; };
+          const fmt = x => Math.round(x).toLocaleString();
+          const city = variables.city;
+          const cities = Object.keys(states).filter(e => /_total_invaders$/.test(e) && /^City - /.test(states[e].attributes.friendly_name || ''))
+            .filter(k => !city || states[k].attributes.friendly_name === 'City - ' + city + ' Total Invaders');
+          if (!cities.length) return (city || 'World') + ': no data';
+          const s = suf => cities.reduce((a, k) => a + n(states[k.replace(/_total_invaders$/, suf)]), 0);
+          const tot = s('_total_invaders'), fl = s('_flashed'), av = s('_unflashed_available'), gone = s('_unflashed_gone');
+          const g = fl / tot * 100, o = Math.min(av / tot * 100, 100 - g), r = Math.max(100 - g - o, 0);
+          const dot = c => '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + c + ';margin-right:4px"></span>';
+          return '<div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-weight:600;font-size:15px">' + (city ? '📍 ' + city : '🌍 World') + '</span><span style="font-size:14px"><b>' + g.toFixed(1) + ' %</b> <span style="opacity:.6">' + fmt(fl) + ' / ' + fmt(tot) + '</span></span></div>'
+            + '<div style="display:flex;height:12px;border-radius:6px;overflow:hidden;background:rgba(127,127,127,.25);margin:8px 0 6px"><div style="width:' + g + '%;background:#4caf50"></div><div style="width:' + o + '%;background:#ff9800"></div><div style="width:' + r + '%;background:#f44336"></div></div>'
+            + '<div style="font-size:12px;opacity:.75">' + dot('#4caf50') + fmt(fl) + ' flashed · ' + dot('#ff9800') + fmt(av) + ' to flash · ' + dot('#f44336') + fmt(gone) + ' destroyed</div>';
+          ]]]
+
+views:
+  - title: Invader Tracker
+    path: invaders
+    type: sections
+    max_columns: 3
+    header:
+      layout: center
+      card:
+        type: custom:button-card
+        template: invader_panel
+        custom_fields:
+          x: |
+            [[[
+            const n = x => { const v = parseFloat(x && x.state); return isNaN(v) ? 0 : v; };
+            const fmt = x => Math.round(x).toLocaleString();
+            const meKey = Object.keys(states).find(e => e.startsWith('sensor.') && /^User - .+ Cities Found$/.test(states[e].attributes.friendly_name || ''));
+            if (!meKey) return 'Invader Tracker: no player profile found (check your Flash Invader UID).';
+            const p = meKey.replace(/_cities_found$/, '');
+            const name = (states[p + '_score']?.attributes.friendly_name || '').replace(/^User - /, '').replace(/ Score$/, '');
+            const cities = Object.keys(states).filter(e => /_total_invaders$/.test(e) && /^City - /.test(states[e].attributes.friendly_name || ''));
+            const total = cities.reduce((a, k) => a + n(states[k]), 0);
+            const inv = n(states[p + '_invaders_found']);
+            const since = states[p + '_registration_date']?.state;
+            const stat = (v, l) => '<div style="flex:1;min-width:110px;text-align:center;padding:10px 6px;border-radius:12px;background:rgba(127,127,127,.12)"><div style="font-size:22px;font-weight:700">' + v + '</div><div style="font-size:12px;opacity:.7">' + l + '</div></div>';
+            return '<div style="display:flex;align-items:center;gap:12px"><div style="font-size:40px">👾</div><div><div style="font-size:24px;font-weight:800">Invader Tracker</div><div style="opacity:.7;font-size:13px">Hunter <b>' + name + '</b>' + (since ? ' · joined ' + since : '') + '</div></div></div>'
+              + '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">'
+              + stat('#' + fmt(n(states[p + '_rank'])), 'world rank')
+              + stat(fmt(n(states[p + '_score'])), 'points')
+              + stat(fmt(inv), 'invaders flashed')
+              + stat(fmt(n(states[p + '_cities_found'])) + ' / ' + cities.length, 'cities invaded')
+              + stat(total ? (inv / total * 100).toFixed(1) + ' %' : '–', 'of the world')
+              + '</div>';
+            ]]]
+    sections:
+      # ─── Leaderboard ────────────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Leaderboard
+            icon: mdi:trophy
+          - type: custom:button-card
+            template: invader_panel
+            custom_fields:
+              x: |
+                [[[
+                const n = x => { const v = parseFloat(x && x.state); return isNaN(v) ? 0 : v; };
+                const fmt = x => Math.round(x).toLocaleString();
+                const P = Object.keys(states).filter(e => e.startsWith('sensor.') && /^User - .+ Score$/.test(states[e].attributes.friendly_name || ''))
+                  .map(k => { const p = k.replace(/_score$/, ''); return {
+                    name: (states[k].attributes.friendly_name || '').replace(/^User - /, '').replace(/ Score$/, ''),
+                    me: !!states[p + '_cities_found'], ok: !['unavailable', 'unknown'].includes(states[k].state),
+                    score: n(states[k]), rank: n(states[p + '_rank']), inv: n(states[p + '_invaders_found']) }; })
+                  .filter(p => p.ok).sort((a, b) => b.score - a.score);
+                const me = P.find(p => p.me); const medal = ['🥇', '🥈', '🥉'];
+                return P.map((p, i) => { const d = me && !p.me ? p.score - me.score : 0;
+                  return '<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;margin:3px 0;' + (p.me ? 'background:rgba(76,175,80,.18);font-weight:700' : 'background:rgba(127,127,127,.08)') + '">'
+                    + '<div style="width:26px;text-align:center;font-size:' + (i < 3 ? 18 : 14) + 'px">' + (medal[i] || i + 1) + '</div>'
+                    + '<div style="flex:1;min-width:0"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + p.name + (p.me ? ' (me)' : '') + '</div>'
+                    + '<div style="font-size:11px;opacity:.65">#' + fmt(p.rank) + ' worldwide · ' + fmt(p.inv) + ' invaders</div></div>'
+                    + '<div style="text-align:right"><div>' + fmt(p.score) + ' pts</div>'
+                    + (p.me ? '' : '<div style="font-size:11px;color:' + (d > 0 ? '#f44336' : '#4caf50') + '">' + (d > 0 ? '+' : '') + fmt(d) + '</div>') + '</div></div>'; }).join('');
+                ]]]
+
+      # ─── Status ─────────────────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Status
+            icon: mdi:radar
+          - type: custom:button-card
+            template: invader_panel
+            custom_fields:
+              x: |
+                [[[
+                const n = x => { const v = parseFloat(x && x.state); return isNaN(v) ? 0 : v; };
+                const fmt = x => Math.round(x).toLocaleString();
+                const items = [];
+                const P = Object.keys(states).filter(e => e.startsWith('sensor.') && /^User - .+ Score$/.test(states[e].attributes.friendly_name || ''))
+                  .map(k => { const p = k.replace(/_score$/, ''); return { name: (states[k].attributes.friendly_name || '').replace(/^User - /, '').replace(/ Score$/, ''), me: !!states[p + '_cities_found'], score: n(states[k]), ok: !['unavailable', 'unknown'].includes(states[k].state) }; })
+                  .filter(p => p.ok).sort((a, b) => b.score - a.score);
+                const me = P.find(p => p.me), i = P.indexOf(me);
+                const fresh = Object.keys(states).filter(e => /_invaders_to_flash$/.test(e) && /^City - /.test(states[e].attributes.friendly_name || ''))
+                  .map(e => states[e].state).filter(v => v && !['unknown', 'unavailable', 'None', ''].includes(v)).join(', ');
+                if (fresh) items.push(['🆕', '<b>' + fresh.split(',').length + ' new or reactivated to flash</b><br><span style="opacity:.7">' + fresh + '</span>']);
+                else items.push(['✅', 'No new invader to flash in your cities']);
+                if (i > 0) items.push(['🎯', '<b>' + fmt(P[i - 1].score - me.score) + ' points</b> to overtake ' + P[i - 1].name]);
+                if (me && i < P.length - 1) items.push(['🛡️', P[i + 1].name + ' is <b>' + fmt(me.score - P[i + 1].score) + ' points</b> behind']);
+                const cities = Object.keys(states).filter(e => /_total_invaders$/.test(e) && /^City - /.test(states[e].attributes.friendly_name || ''))
+                  .map(k => { const p = k.replace(/_total_invaders$/, ''); return { fl: n(states[p + '_flashed']), av: n(states[p + '_unflashed_available']) }; });
+                const mine = cities.filter(c => c.fl > 0), done = mine.filter(c => c.av === 0);
+                items.push(['🏙️', '<b>' + fmt(mine.reduce((a, c) => a + c.av, 0)) + ' left to flash</b> in your ' + mine.length + ' cities']);
+                items.push(['🏆', '<b>' + done.length + ' cities completed</b> (nothing left to flash)']);
+                const nc = states['sensor.world_new_city_invaded']?.state;
+                if (nc && !['None', 'unknown', 'unavailable'].includes(nc)) items.push(['🌍', 'New city invaded: <b>' + nc + '</b>']);
+                return items.map(([e, t]) => '<div style="display:flex;gap:10px;align-items:flex-start;padding:6px 0;font-size:14px"><div style="width:22px;text-align:center">' + e + '</div><div style="flex:1">' + t + '</div></div>').join('');
+                ]]]
+
+      # ─── Progress bars (set city: '' for the world total) ───────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Progress
+            icon: mdi:earth
+          - type: custom:button-card
+            template: invader_progress
+            variables:
+              city: Paris
+          - type: custom:button-card
+            template: invader_progress
+
+      # ─── My cities ──────────────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: My cities
+            icon: mdi:map-marker-check
+          - type: custom:button-card
+            template: invader_panel
+            custom_fields:
+              x: |
+                [[[
+                const n = x => { const v = parseFloat(x && x.state); return isNaN(v) ? 0 : v; };
+                const mine = Object.keys(states).filter(e => /_total_invaders$/.test(e) && /^City - /.test(states[e].attributes.friendly_name || ''))
+                  .map(k => { const p = k.replace(/_total_invaders$/, ''); return { name: states[k].attributes.friendly_name.slice(7, -15), tot: n(states[k]), fl: n(states[p + '_flashed']), av: n(states[p + '_unflashed_available']) }; })
+                  .filter(c => c.fl > 0 && c.tot > 0).sort((a, b) => b.fl / b.tot - a.fl / a.tot || b.tot - a.tot);
+                return mine.map(c => { const g = c.fl / c.tot * 100, o = Math.min(c.av / c.tot * 100, 100 - g), r = Math.max(100 - g - o, 0);
+                  return '<div style="padding:7px 0"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span>' + (c.av ? '' : '🏆 ') + '<b>' + c.name + '</b></span><span style="opacity:.75">' + c.fl + '/' + c.tot + (c.av ? ' · <span style="color:#ff9800">' + c.av + ' to flash</span>' : '') + '</span></div>'
+                    + '<div style="display:flex;height:6px;border-radius:3px;overflow:hidden;background:rgba(127,127,127,.25)"><div style="width:' + g + '%;background:#4caf50"></div><div style="width:' + o + '%;background:#ff9800"></div><div style="width:' + r + '%;background:#f44336"></div></div></div>'; }).join('');
+                ]]]
+
+      # ─── Next destinations ──────────────────────────────────────────
+      - type: grid
+        cards:
+          - type: heading
+            heading: Next destinations
+            icon: mdi:airplane-takeoff
+          - type: custom:button-card
+            template: invader_panel
+            custom_fields:
+              x: |
+                [[[
+                const n = x => { const v = parseFloat(x && x.state); return isNaN(v) ? 0 : v; };
+                const top = Object.keys(states).filter(e => /_total_invaders$/.test(e) && /^City - /.test(states[e].attributes.friendly_name || ''))
+                  .map(k => { const p = k.replace(/_total_invaders$/, ''); return { name: states[k].attributes.friendly_name.slice(7, -15), tot: n(states[k]), fl: n(states[p + '_flashed']), av: n(states[p + '_unflashed_available']) }; })
+                  .filter(c => c.fl === 0 && c.av > 0).sort((a, b) => b.av - a.av).slice(0, 10);
+                return '<div style="font-size:12px;opacity:.7;margin-bottom:6px">Cities you have not invaded yet, ranked by invaders still flashable</div>'
+                  + top.map((c, i) => '<div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid rgba(127,127,127,.15);font-size:14px"><span><span style="opacity:.5;display:inline-block;width:22px">' + (i + 1) + '</span>' + c.name + '</span><span><b style="color:#ff9800">' + c.av + '</b> <span style="opacity:.6">/ ' + c.tot + '</span></span></div>').join('');
+                ]]]
+
+      # ─── History ────────────────────────────────────────────────────
+      # Replace the entities with your own profile / followed players.
+      - type: grid
+        cards:
+          - type: heading
+            heading: History
+            icon: mdi:chart-line
+          - type: statistics-graph
+            title: Invaders flashed
+            days_to_show: 90
+            period: day
+            chart_type: line
+            stat_types: [max]
+            entities:
+              - sensor.user_mypseudo_invaders_found
+              - sensor.user_friend_invaders_found
+          - type: statistics-graph
+            title: World rank
+            days_to_show: 90
+            period: day
+            chart_type: line
+            stat_types: [min]
+            entities:
+              - sensor.user_mypseudo_rank

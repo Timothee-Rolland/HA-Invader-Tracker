@@ -1,9 +1,9 @@
 # Invader Tracker for Home Assistant
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
-[![GitHub Release](https://img.shields.io/github/release/Trolent/HA-Invader-Tracker.svg)](https://github.com/Trolent/HA-Invader-Tracker/releases)
-[![License](https://img.shields.io/github/license/Trolent/HA-Invader-Tracker.svg)](LICENSE)
-[![Code Quality](https://img.shields.io/badge/code%20quality-clean-brightgreen.svg)](https://github.com/Trolent/HA-Invader-Tracker)
+[![GitHub Release](https://img.shields.io/github/release/Timothee-Rolland/HA-Invader-Tracker.svg)](https://github.com/Timothee-Rolland/HA-Invader-Tracker/releases)
+[![License](https://img.shields.io/github/license/Timothee-Rolland/HA-Invader-Tracker.svg)](LICENSE)
+[![Code Quality](https://img.shields.io/badge/code%20quality-clean-brightgreen.svg)](https://github.com/Timothee-Rolland/HA-Invader-Tracker)
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-yellow.svg?logo=buy-me-a-coffee)](https://buymeacoffee.com/trolent)
 
 Track [Space Invader](https://www.space-invaders.com/) street art mosaics in Home Assistant. This integration combines data from:
@@ -15,6 +15,19 @@ Track [Space Invader](https://www.space-invaders.com/) street art mosaics in Hom
 ## Overview
 
 Invader Tracker is a comprehensive Home Assistant integration that helps you track, manage, and hunt Space Invader street art mosaics across multiple cities. It automatically monitors new additions, tracks destroyed invaders, detects new cities being invaded worldwide, and keeps you updated on your collection progress.
+
+## Dashboard
+
+![Invader Tracker showcase dashboard](docs/images/dashboard-showcase.png)
+
+A ready-to-paste dashboard built only from the integration's entities: profile header, leaderboard of the players you follow, status (new invaders, points to the next rival), Paris and world progress, per-city progress and the next cities worth a trip. Players and cities are discovered automatically.
+
+→ **[Dashboard guide](docs/dashboard.md)** · **[`dashboard-example.yaml`](docs/dashboard-example.yaml)** (requires [button-card](https://github.com/custom-cards/button-card))
+
+<p>
+<img src="docs/images/dashboard-leaderboard.png" width="400" alt="Leaderboard">
+<img src="docs/images/dashboard-status.png" width="400" alt="Status">
+</p>
 
 ## Features
 
@@ -44,13 +57,13 @@ Invader Tracker is a comprehensive Home Assistant integration that helps you tra
 2. Click on **Integrations**
 3. Click the three dots in the top right corner
 4. Select **Custom repositories**
-5. Add `https://github.com/Trolent/HA-Invader-Tracker` with category **Integration**
+5. Add `https://github.com/Timothee-Rolland/HA-Invader-Tracker` with category **Integration**
 6. Click **Install**
 7. Restart Home Assistant
 
 ### Manual Installation
 
-1. Download the latest release from [GitHub Releases](https://github.com/Trolent/HA-Invader-Tracker/releases)
+1. Download the latest release from [GitHub Releases](https://github.com/Timothee-Rolland/HA-Invader-Tracker/releases)
 2. Extract and copy `custom_components/invader_tracker` to your `config/custom_components/` directory
 3. Restart Home Assistant
 
@@ -84,18 +97,20 @@ Your UID is a unique identifier (UUID v4 format) for your Flash Invader account.
 
 ## Entities & Sensors
 
+Entity IDs below are the defaults Home Assistant generates from the device name — e.g. device **City - Paris** + entity **Flashed** → `sensor.city_paris_flashed`. Check yours in **Settings → Devices & Services → Entities** if you renamed them.
+
 ### Player Profile Device
 
 Created automatically as soon as a UID is configured. Named **"User - {your pseudo}"**.
 
 | Entity | Type | Description | Attributes |
 |--------|------|-------------|------------|
-| `sensor.score` | Sensor | Your total score | — |
-| `sensor.rank` | Sensor | Your global rank | `rank_str` |
-| `sensor.invaders_found` | Sensor | Total invaders flashed (all cities) | — |
-| `sensor.cities_found` | Sensor | Number of cities with at least one flash | — |
-| `sensor.registration_date` | Sensor | Account registration date | — |
-| `sensor.total_invaders_worldwide` | Sensor | Total invaders placed worldwide by Space Invader | — |
+| `sensor.user_<pseudo>_score` | Sensor | Your total score | — |
+| `sensor.user_<pseudo>_rank` | Sensor | Your global rank | `rank_str` |
+| `sensor.user_<pseudo>_invaders_found` | Sensor | Total invaders flashed (all cities) | — |
+| `sensor.user_<pseudo>_cities_found` | Sensor | Number of cities with at least one flash | — |
+| `sensor.user_<pseudo>_registration_date` | Sensor | Account registration date | — |
+| `sensor.user_<pseudo>_total_invaders_worldwide` | Sensor | Total invaders placed worldwide by Space Invader | — |
 
 <img src="docs/images/main-user-entities.png" width="320" alt="Main user entities">
 
@@ -105,28 +120,29 @@ One device per followed player, named **"User - {name}"**. Can be disabled in in
 
 | Entity | Type | Description | Attributes |
 |--------|------|-------------|------------|
-| `sensor.score` | Sensor | Player's total score | — |
-| `sensor.rank` | Sensor | Player's global rank | `rank_str` |
-| `sensor.invaders_found` | Sensor | Player's total invaders flashed | — |
+| `sensor.user_<name>_score` | Sensor | Player's total score | — |
+| `sensor.user_<name>_rank` | Sensor | Player's global rank | `rank_str` |
+| `sensor.user_<name>_invaders_found` | Sensor | Player's total invaders flashed | — |
 
 <img src="docs/images/followed-user-entities.png" width="320" alt="Followed user entities">
 
 ### City Devices
 
-For each tracked city, a dedicated device is created with:
+For each tracked city, a device named **"City - {name}"** is created with:
 
 | Entity | Type | Description | Attributes |
 |--------|------|-------------|------------|
-| `sensor.total_invaders` | Sensor | Total invaders in the city | `flashable_count` |
-| `sensor.flashed` | Sensor | Invaders you've flashed | — |
-| `sensor.unflashed_available` | Sensor | Flashable invaders not yet done | `invaders` (list of IDs) |
-| `sensor.unflashed_gone` | Sensor | Destroyed invaders you missed | `invaders` (list of IDs) |
+| `sensor.city_<name>_total_invaders` | Sensor | Total invaders in the city | `flashable_count` |
+| `sensor.city_<name>_flashed` | Sensor | Invaders you've flashed | — |
+| `sensor.city_<name>_unflashed_available` | Sensor | Flashable invaders not yet done | `invaders` (list of IDs) |
+| `sensor.city_<name>_unflashed_gone` | Sensor | Destroyed invaders you missed | `invaders` (list of IDs) |
+| `sensor.city_<name>_new_reactivated` | Sensor | New + reactivated unflashed invaders | `new_count`, `reactivated_count` |
+| `sensor.city_<name>_invaders_to_flash` | Sensor | CSV list of new/reactivated IDs to flash | — |
+| `binary_sensor.city_<name>_has_new_invaders` | Binary Sensor | ON when new/reactivated invaders exist | — |
+
+`flashed` + `unflashed_available` + `unflashed_gone` = `total_invaders`.
 
 > The `invaders` list is capped at 500 IDs, with `invaders_truncated: true` added when it is — past ~16 KB of attributes Home Assistant's recorder stores none of them at all.
-
-| `sensor.new_reactivated` | Sensor | New + reactivated unflashed invaders | `new_count`, `reactivated_count` |
-| `sensor.invaders_to_flash` | Sensor | CSV list of IDs to flash | — |
-| `binary_sensor.has_new` | Binary Sensor | ON when new/reactivated invaders exist | — |
 
 <img src="docs/images/city-entities.png" width="320" alt="City entities">
 
@@ -136,14 +152,14 @@ Aggregates stats across all tracked cities. Named **"World"**.
 
 | Entity | Type | Description | Attributes |
 |--------|------|-------------|------------|
-| `sensor.total_invaders` | Sensor | Total across all tracked cities | `flashable_count` |
-| `sensor.flashed` | Sensor | Total flashed across all cities | — |
-| `sensor.unflashed_available` | Sensor | Total unflashed available across all cities | — |
-| `sensor.unflashed_gone` | Sensor | Total missed across all cities | — |
-| `sensor.new_reactivated` | Sensor | Total new/reactivated across all cities | `new_count`, `reactivated_count` |
-| `sensor.invaders_to_flash` | Sensor | All IDs to flash across all cities | — |
-| `sensor.new_city_invaded` | Sensor | Name of a newly invaded city (within the configured window), `None` otherwise | `detected_at`, `also_new` |
-| `binary_sensor.has_new` | Binary Sensor | ON when any tracked city has new invaders | — |
+| `sensor.world_total_invaders` | Sensor | Total across all tracked cities | `flashable_count` |
+| `sensor.world_flashed` | Sensor | Total flashed across all cities | — |
+| `sensor.world_unflashed_available` | Sensor | Total unflashed available across all cities | — |
+| `sensor.world_unflashed_gone` | Sensor | Total missed across all cities | — |
+| `sensor.world_new_reactivated` | Sensor | Total new/reactivated across all cities | `new_count`, `reactivated_count` |
+| `sensor.world_invaders_to_flash` | Sensor | All IDs to flash across all cities | — |
+| `sensor.world_new_city_invaded` | Sensor | Name of a newly invaded city (within the configured window), `None` otherwise | `detected_at`, `also_new` |
+| `binary_sensor.world_has_new_invaders` | Binary Sensor | ON when any tracked city has new invaders | — |
 
 ## Configuration Options
 
@@ -168,63 +184,60 @@ Accessible via **Settings → Devices & Services → Invader Tracker → Configu
 
 ## Automations
 
+Replace `notify.mobile_app_your_phone` and `<pseudo>` with your own.
+
 ### Notify on New Invaders (any city)
 
 ```yaml
-automation:
-  - alias: "Alert: New Invaders Detected"
-    trigger:
-      - platform: state
-        entity_id: binary_sensor.world_has_new
-        to: "on"
-    action:
-      - service: notify.mobile_app_your_phone
-        data:
-          title: "New Space Invaders!"
-          message: >
-            {{ states('sensor.world_new_reactivated') }} new target(s) to flash.
-            {{ states('sensor.world_invaders_to_flash') }}
+alias: "Alert: New Invaders Detected"
+triggers:
+  - trigger: state
+    entity_id: binary_sensor.world_has_new_invaders
+    to: "on"
+actions:
+  - action: notify.mobile_app_your_phone
+    data:
+      title: "New Space Invaders!"
+      message: >
+        {{ states('sensor.world_new_reactivated') }} new target(s) to flash:
+        {{ states('sensor.world_invaders_to_flash') }}
 ```
 
 ### Alert on New City Invaded
 
 ```yaml
-automation:
-  - alias: "Alert: New City Invaded"
-    trigger:
-      - platform: state
-        entity_id: sensor.world_new_city_invaded
-        not_to:
-          - "unavailable"
-          - "unknown"
-    condition:
-      - condition: template
-        value_template: "{{ trigger.to_state.state not in ['unavailable', 'unknown', 'None'] }}"
-    action:
-      - service: notify.mobile_app_your_phone
-        data:
-          title: "Space Invader has invaded a new city!"
-          message: >
-            {{ trigger.to_state.state }} was first detected on
-            {{ state_attr('sensor.world_new_city_invaded', 'detected_at')[:10] }}.
+alias: "Alert: New City Invaded"
+triggers:
+  - trigger: state
+    entity_id: sensor.world_new_city_invaded
+conditions:
+  - condition: template
+    value_template: "{{ trigger.to_state.state not in ['unavailable', 'unknown', 'None'] }}"
+actions:
+  - action: notify.mobile_app_your_phone
+    data:
+      title: "Space Invader has invaded a new city!"
+      message: >
+        {{ trigger.to_state.state }} was first detected on
+        {{ state_attr('sensor.world_new_city_invaded', 'detected_at')[:10] }}.
 ```
 
 ### Daily Summary Report
 
 ```yaml
-automation:
-  - alias: "Invader Tracker: Daily Summary"
-    trigger:
-      - platform: time
-        at: "20:00:00"
-    action:
-      - service: notify.mobile_app_your_phone
-        data:
-          title: "Daily Invader Summary"
-          message: >
-            Score: {{ states('sensor.score') }} (rank {{ state_attr('sensor.rank', 'rank_str') }})
-            Paris: {{ states('sensor.paris_unflashed_available') }} to flash
-            Total flashed: {{ states('sensor.world_flashed') }}
+alias: "Invader Tracker: Daily Summary"
+triggers:
+  - trigger: time
+    at: "20:00:00"
+actions:
+  - action: notify.mobile_app_your_phone
+    data:
+      title: "Daily Invader Summary"
+      message: >
+        Score: {{ states('sensor.user_<pseudo>_score') }}
+        (rank {{ state_attr('sensor.user_<pseudo>_rank', 'rank_str') }})
+        Paris: {{ states('sensor.city_paris_unflashed_available') }} to flash
+        Total flashed: {{ states('sensor.user_<pseudo>_invaders_found') }}
 ```
 
 ## Troubleshooting
@@ -245,7 +258,7 @@ automation:
 
 1. Check the update interval in options — it may be set to a long value
 2. Check logs for "Rate limited" or connection errors
-3. Force a refresh: **Developer Tools → Services → `homeassistant.update_entity`**
+3. Force a refresh: **Developer Tools → Actions → `homeassistant.update_entity`**
 
 ### No Invader Data (Awazleon Disabled)
 
@@ -259,7 +272,7 @@ If city sensors show no invader data, Awazleon may be disabled (no API key confi
 
 1. Verify your Awazleon API key is valid — without it the city list cannot be fetched
 2. awazleon.space may be temporarily unreachable — try again after a few minutes
-3. Check [GitHub Issues](https://github.com/Trolent/HA-Invader-Tracker/issues) for known problems
+3. Check [GitHub Issues](https://github.com/Timothee-Rolland/HA-Invader-Tracker/issues) for known problems
 
 ### Enable Debug Logging
 

@@ -4,9 +4,9 @@
   "codeowners": [],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/Trolent/ha-invader-tracker",
+  "documentation": "https://github.com/Timothee-Rolland/HA-Invader-Tracker",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/Trolent/ha-invader-tracker/issues",
+  "issue_tracker": "https://github.com/Timothee-Rolland/HA-Invader-Tracker/issues",
   "requirements": ["beautifulsoup4>=4.12.0"],
   "version": "2.8.1"
 }

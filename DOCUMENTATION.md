@@ -27,7 +27,7 @@ Overview of all available documentation for the Invader Tracker Home Assistant i
 
 ## External Resources
 
-- [GitHub Issues](https://github.com/Trolent/HA-Invader-Tracker/issues)
+- [GitHub Issues](https://github.com/Timothee-Rolland/HA-Invader-Tracker/issues)
 - [Home Assistant Documentation](https://www.home-assistant.io/docs/)
 - [HACS Documentation](https://hacs.xyz/)
 - [Home Assistant Community](https://community.home-assistant.io/)
