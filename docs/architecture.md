@@ -753,7 +753,7 @@ ha-invader-tracker/
 
 ```bash
 # Clone repository
-git clone https://github.com/Trolent/HA-Invader-Tracker.git
+git clone https://github.com/Timothee-Rolland/HA-Invader-Tracker.git
 cd HA-Invader-Tracker
 
 # Create virtual environment
@@ -984,9 +984,9 @@ logger:
   "codeowners": [],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/Trolent/ha-invader-tracker",
+  "documentation": "https://github.com/Timothee-Rolland/HA-Invader-Tracker",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/Trolent/ha-invader-tracker/issues",
+  "issue_tracker": "https://github.com/Timothee-Rolland/HA-Invader-Tracker/issues",
   "requirements": ["beautifulsoup4>=4.12.0"],
   "version": "1.3.3"
 }
@@ -1082,7 +1082,7 @@ The integration is designed to handle minor API changes gracefully through error
 
 ### Resources
 
-- **GitHub Issues:** [Trolent/HA-Invader-Tracker/issues](https://github.com/Trolent/HA-Invader-Tracker/issues)
+- **GitHub Issues:** [Timothee-Rolland/HA-Invader-Tracker/issues](https://github.com/Timothee-Rolland/HA-Invader-Tracker/issues)
 - **Home Assistant Community:** [Community Forums](https://community.home-assistant.io/)
 - **Debug Logs:** Enable debug logging for detailed troubleshooting
 

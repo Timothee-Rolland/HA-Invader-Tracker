@@ -292,8 +292,8 @@ logger:
 
 ## Useful Links
 
-- **GitHub:** https://github.com/Trolent/HA-Invader-Tracker
-- **Issues:** https://github.com/Trolent/HA-Invader-Tracker/issues
+- **GitHub:** https://github.com/Timothee-Rolland/HA-Invader-Tracker
+- **Issues:** https://github.com/Timothee-Rolland/HA-Invader-Tracker/issues
 - **awazleon.space:** https://www.awazleon.space/
 - **invader-spotter.art:** https://www.invader-spotter.art/
 - **Space Invader:** https://www.space-invaders.com/
