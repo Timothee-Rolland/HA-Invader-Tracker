@@ -9,6 +9,7 @@ from custom_components.invader_tracker.models import (
     Invader,
     InvaderStatus,
     StateSnapshot,
+    invader_city_code,
     normalize_invader_id,
 )
 
@@ -34,6 +35,21 @@ class TestNormalizeInvaderId:
         """IDs that do not end with a number are only upper-cased."""
         assert normalize_invader_id("pa_bis") == "PA_BIS"
         assert normalize_invader_id("paris") == "PARIS"
+
+    def test_id_without_underscore(self):
+        """Flash Invader IDs such as SPACE2ISS get the awazleon form."""
+        assert normalize_invader_id("SPACE2ISS") == "SPACE_2"
+        assert normalize_invader_id("space02") == "SPACE_2"
+
+
+class TestInvaderCityCode:
+    """Tests for invader_city_code."""
+
+    def test_city_codes(self):
+        """The city code is the normalized prefix, never the first two letters of SPACE."""
+        assert invader_city_code("PA_346") == "PA"
+        assert invader_city_code("lyn_01") == "LYN"
+        assert invader_city_code("SPACE2ISS") == "SPACE"
 
 
 class TestInvader:

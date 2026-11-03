@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from enum import Enum
@@ -14,12 +15,29 @@ def normalize_invader_id(inv_id: str) -> str:
     but only the awazleon client normalizes what it returns ("PA_01" ->
     "PA_1"); the Flash Invader API is stored as received ("NA_01", "na_02").
     Run every ID through this before comparing one source with the other.
+
+    A few Flash Invader IDs have no underscore at all, e.g. "SPACE2ISS" for
+    the invader on the International Space Station: they are rewritten to
+    the awazleon form ("SPACE_2") so they land in their own city instead of
+    being grouped by their first two letters (here São Paulo, "SP").
     """
     ref = inv_id.strip().upper()
     prefix, _, number = ref.rpartition("_")
     if prefix and number.isdigit():
         return f"{prefix}_{int(number)}"
+    if not prefix and (match := _NO_UNDERSCORE_ID.fullmatch(ref)):
+        return f"{match.group(1)}_{int(match.group(2))}"
     return ref
+
+
+def invader_city_code(inv_id: str) -> str:
+    """Return the city code an invader ID belongs to ("PA_346" -> "PA", "SPACE2ISS" -> "SPACE")."""
+    prefix, _, _ = normalize_invader_id(inv_id).rpartition("_")
+    return prefix or inv_id.strip().upper()[:2]
+
+
+# City letters, then the number, then an optional label: "SPACE2ISS" -> ("SPACE", "2")
+_NO_UNDERSCORE_ID = re.compile(r"([A-Z]+)(\d+)[A-Z]*")
 
 
 class InvaderStatus(Enum):
