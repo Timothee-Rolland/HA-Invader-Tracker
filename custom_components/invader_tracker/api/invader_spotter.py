@@ -511,7 +511,9 @@ class InvaderSpotterScraper:
         except TimeoutError as err:
             raise InvaderSpotterConnectionError("Timeout fetching news") from err
 
-        return self._parse_news(html_content, days, city_codes)
+        # news.php holds the whole history (~600 KB): parsing it with BeautifulSoup
+        # takes seconds on a Raspberry Pi, so keep it off the event loop.
+        return await asyncio.get_running_loop().run_in_executor(None, self._parse_news, html_content, days, city_codes)
 
     def _parse_news(
         self,

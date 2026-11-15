@@ -103,20 +103,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     processor = DataProcessor(spotter_coordinator, flash_coordinator, store, news_days, new_city_days)
     processor.set_city_names(cities)
 
-    # Initialize processor (load previous snapshot)
+    # Load the previous snapshot from disk
     await processor.async_initialize()
 
-    # Initial data fetch — Awazleon failure is non-fatal (coordinator will retry on schedule)
-    _LOGGER.debug("Performing initial data fetch")
-    try:
-        await spotter_coordinator.async_config_entry_first_refresh()
-    except Exception:  # noqa: BLE001
-        _LOGGER.warning("Awazleon initial fetch failed, will retry on schedule")
+    # Flash Invader is a couple of quick requests, and an auth failure must
+    # surface during setup to trigger reauth, so it is awaited. The profile goes
+    # second: it copies total_si_count, which the flash fetch populates.
+    _LOGGER.debug("Performing initial Flash Invader fetch")
     await flash_coordinator.async_config_entry_first_refresh()
     await profile_coordinator.async_config_entry_first_refresh()
-
-    # Save initial snapshot
-    await processor.async_save_snapshot()
 
     # Set up listener to save snapshot and refresh news after each spotter update
     def _on_spotter_update() -> None:
@@ -140,6 +135,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     # Set up platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    # Awazleon is fetched city by city with a pause in between: minutes when
+    # tracking dozens of cities. Awaiting it here held up Home Assistant's
+    # startup, so it runs in the background; city entities stay unavailable
+    # until it lands, then the spotter listener saves the snapshot.
+    async def _async_initial_invader_fetch() -> None:
+        await processor.async_refresh_news()
+        await spotter_coordinator.async_refresh()
+
+    entry.async_create_background_task(
+        hass, _async_initial_invader_fetch(), f"{DOMAIN}_initial_invader_fetch_{entry.entry_id}"
+    )
 
     _LOGGER.info("Invader Tracker setup complete: tracking %d cities", len(cities))
     return True

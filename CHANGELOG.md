@@ -5,6 +5,13 @@ All notable changes to the Invader Tracker integration will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.3] - 2026-11-15
+
+### Fixed
+
+- **Démarrage de Home Assistant bloqué plusieurs minutes** — le setup attendait le téléchargement complet d'awazleon, ville par ville avec 2 s de pause entre chaque : avec 85 villes suivies, l'intégration (et donc le démarrage de HA) restait en attente plus de 3 minutes. Le fetch awazleon et les news tournent désormais en tâche de fond après la création des entités ; seul Flash Invader (quelques requêtes rapides, nécessaires pour déclencher la réauthentification) est encore attendu. Les capteurs de ville restent indisponibles le temps du premier chargement, puis se remplissent ; le snapshot n'est sauvegardé qu'une fois les données arrivées.
+- L'analyse de `news.php` (~570 Ko, tout l'historique) par BeautifulSoup se faisait dans la boucle d'événements et figeait Home Assistant plusieurs secondes sur un Raspberry Pi. Elle tourne maintenant dans un thread de l'executor.
+
 ## [2.8.2] - 2026-11-03
 
 ### Fixed
