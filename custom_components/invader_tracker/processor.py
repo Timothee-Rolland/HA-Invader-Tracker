@@ -55,16 +55,17 @@ class DataProcessor:
         self._new_city_days: int = new_city_days
 
     async def async_initialize(self) -> None:
-        """Load previous snapshot from storage and fetch news."""
+        """Load previous snapshot from storage.
+
+        News are not fetched here: that is a network call, done in the
+        background after setup so it does not hold up Home Assistant's startup.
+        """
         self._previous_snapshot = await self._store.async_load_snapshot()
         if self._previous_snapshot:
             _LOGGER.info(
                 "Loaded previous snapshot from %s",
                 self._previous_snapshot.timestamp.isoformat(),
             )
-
-        # Fetch initial news events
-        await self.async_refresh_news()
 
     def set_city_names(self, city_names: dict[str, str]) -> None:
         """Set city code to name mapping.
